@@ -46,6 +46,8 @@ export default function HomeContent() {
   const [showMenu, setShowMenu] = useState(false);
   const { user, logout } = useAuth();
 
+  const api = process.env.NEXT_PUBLIC_API_URL;
+
   const router = useRouter();
 
   const searchParams = useSearchParams();
@@ -65,7 +67,7 @@ export default function HomeContent() {
         let res;
 
         if (normalizedLocation) {
-          res = await axios.get("http://localhost:3000/hotels/browse", {
+          res = await axios.get(`${api}/hotels/browse`, {
             params: {
               location: normalizedLocation,
               fromDate,
@@ -74,7 +76,7 @@ export default function HomeContent() {
           });
         } else {
           res = await axios.get(
-            `http://localhost:3000/hotels?page=${page}&limit=${limit}`,
+            `${api}/hotels?page=${page}&limit=${limit}`,
           );
         }
 
@@ -85,7 +87,7 @@ export default function HomeContent() {
     };
 
     fetchHotels();
-  }, [page, normalizedLocation, fromDate, toDate, limit]);
+  }, [page, normalizedLocation, fromDate, toDate, limit, api]);
 
   const handleLogout = () => {
     logout();
