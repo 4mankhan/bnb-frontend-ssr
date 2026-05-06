@@ -1,0 +1,340 @@
+"use client";
+
+import Image from "next/image";
+import axios from "axios";
+import { useEffect, useState, useMemo } from "react";
+import {
+  Waves,
+  Mountain,
+  Building2,
+  Wheat,
+  Droplets,
+  Sparkles,
+  Tent,
+  Landmark,
+  Heart,
+  Star,
+  Menu,
+  UserRound,
+  SlidersHorizontal,
+  Map,
+  User, Calendar, Home, LogOut, LogIn
+} from "lucide-react";
+import Pagination from "@/components/HomePage/Pagination";
+import { useRouter } from "next/navigation";
+import SearchBar from "@/components/HomePage/Searchbar";
+import ThemeToggle from "@/utils/Theme/ThemeToggle";
+import { useSearchParams } from "next/navigation";
+import SecondSearchBar from "@/components/HomePage/SecondSearchBar";
+import { useAuth } from "@/utils/authContext";
+import useResponsiveLimit from "@/utils/reposiveRateLimit";
+
+const categories = [
+  { label: "Beachfront", Icon: Waves },
+  { label: "Mountains", Icon: Mountain },
+  { label: "City", Icon: Building2 },
+  { label: "Countryside", Icon: Wheat },
+  { label: "Lakefront", Icon: Droplets },
+  { label: "Luxury", Icon: Sparkles },
+  { label: "Cabins", Icon: Tent },
+  { label: "Heritage", Icon: Landmark },
+];
+
+export default function HomeContent() {
+  const [hotels, setHotels] = useState([]);
+  const [page, setPage] = useState(1);
+  const [showMenu, setShowMenu] = useState(false);
+  const { user, logout } = useAuth();
+
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+
+  const location = searchParams.get("location");
+  const fromDate = searchParams.get("fromDate");
+  const toDate = searchParams.get("toDate");
+
+  const normalizedLocation = useMemo(() => {
+    return location?.trim().toLowerCase() || "";
+  }, [location]);
+
+  const limit  = useResponsiveLimit();
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        let res;
+
+        if (normalizedLocation) {
+          res = await axios.get("http://localhost:3000/hotels/browse", {
+            params: {
+              location: normalizedLocation,
+              fromDate,
+              toDate,
+            },
+          });
+        } else {
+          res = await axios.get(
+            `http://localhost:3000/hotels?page=${page}&limit=${limit}`,
+          );
+        }
+
+        setHotels(res.data.data || res.data);
+      } catch (error) {
+        console.error("Error fetching hotels:", error);
+      }
+    };
+
+    fetchHotels();
+  }, [page, normalizedLocation, fromDate, toDate, limit]);
+
+  const handleLogout = () => {
+    logout();
+    console.log("logout");
+  };
+
+  return (
+    <main className="bg-white dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      {showMenu && (
+        <div
+          className="fixed inset-0 bg-black/70 z-40"
+          onClick={() => setShowMenu(false)}
+        />
+      )}
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            {/* Logo */}
+            <div className="">
+              <h1
+                className="text-2xl font-bold text-rose-500 tracking-tight cursor-pointer"
+                onClick={(e) => router.push("/")}
+              >
+                amanbnb
+              </h1>
+            </div>
+
+            <SearchBar />
+
+            {/* Right Nav */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              <ThemeToggle />
+              <button className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full px-4 py-2 transition-colors whitespace-nowrap">
+                Airbnb your home
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowMenu((prev) => !prev)}
+                  className="flex items-center gap-2 md:gap-10 border border-gray-300 dark:border-gray-600 rounded-full px-3 py-2 hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <Menu className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                  <div className="w-7 h-7 rounded-full bg-gray-500 flex items-center justify-center">
+                    <UserRound className="h-4 w-4 text-white" />
+                  </div>
+                </button>
+
+                {/* 👇 PLACE IT HERE */}
+               {showMenu && (
+  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 z-50">
+    
+    <button
+      onClick={() => router.push("/account")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+    >
+      <User size={16} />
+      Edit Profile
+    </button>
+
+    <button
+      onClick={() => {
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+        router.push("/bookings");
+      }}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+    >
+      <Calendar size={16} />
+      All Bookings
+    </button>
+
+    <hr className="my-2 border-gray-200 dark:border-gray-700" />
+
+    <button
+      onClick={() => router.push("/owner")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+    >
+      <Home size={16} />
+      Become a host
+    </button>
+
+    <hr className="my-2 border-gray-200 dark:border-gray-700" />
+
+    {user ? (
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <LogOut size={16} />
+        Logout
+      </button>
+    ) : (
+      <button
+        onClick={() => router.push("/login")}
+        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <LogIn size={16} />
+        Sign In
+      </button>
+    )}
+  </div>
+)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <SecondSearchBar />
+      </header>
+
+      {/* Category Filter Bar */}
+      <div className="border-b border-gray-200 dark:border-gray-800 sticky top-16 sm:top-20 z-40 bg-white dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-6 md:gap-20 sm:gap-8 py-4 overflow-x-auto scrollbar-hide">
+            {categories.map((cat, i) => {
+              const Icon = cat.Icon;
+              return (
+                <button
+                  key={cat.label}
+                  type="button"
+                  className={`flex flex-col items-center gap-1.5 pb-2 border-b-2 min-w-16 sm:min-w-0 transition-colors ${
+                    i === 0
+                      ? "border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-100"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Icon
+                    className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
+                    strokeWidth={1.5}
+                    aria-hidden
+                  />
+                  <span className="text-xs font-medium whitespace-nowrap text-center">
+                    {cat.label}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Filter Button */}
+            <div className="ml-auto pl-4 border-l border-gray-200 dark:border-gray-800">
+              <button
+                type="button"
+                className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-colors shrink-0"
+              >
+                <SlidersHorizontal
+                  className="h-4 w-4 shrink-0"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Listings Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+          {hotels.map((hotel) => (
+            <div
+              key={hotel._id}
+              className="group cursor-pointer"
+              onClick={() => router.push(`/hotel/${hotel._id}`)}
+            >
+              <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={hotel.photos?.[0] || "/fallback.jpg"} //
+                  alt={hotel.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 rounded-full p-1.5 sm:p-2 bg-black/30 backdrop-blur-[2px] text-white hover:bg-black/45 hover:scale-110 active:scale-95 transition-transform"
+                  aria-label="Save to wishlist"
+                >
+                  <Heart
+                    className="h-4 w-4 sm:h-4.5 sm:w-4.5 shrink-0"
+                    strokeWidth={2}
+                    fill="currentColor"
+                    aria-hidden
+                  />
+                </button>
+
+                <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+                  Popular
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-0.5">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {hotel.name}
+                  </h3>
+
+                  <div className="flex text-gray-500 dark:text-gray-400 items-center gap-0.5 sm:gap-1 shrink-0">
+                    <Star
+                      className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 fill-amber-500"
+                      strokeWidth={1.5}
+                      aria-hidden
+                    />
+                    <span className="text-sm font-medium tabular-nums">
+                      4.8
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {hotel.city}
+                </p>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {hotel.contactInfo?.location}
+                </p>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  120 reviews
+                </p>
+
+                <p className="text-sm text-gray-900 dark:text-gray-100 pt-1">
+                  <span className="font-semibold">₹5,000</span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {" "}
+                    night
+                  </span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button
+          type="button"
+          className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-900 text-white text-sm font-medium px-4 py-2.5 sm:px-5 sm:py-3 rounded-full shadow-lg transition-colors max-w-[calc(100vw-2rem)]"
+        >
+          <Map className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          <span className="truncate">Show map</span>
+        </button>
+      </div>
+      <Pagination page={page} setPage={setPage} />
+    </main>
+  );
+}

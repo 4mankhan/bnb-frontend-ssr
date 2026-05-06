@@ -1,14 +1,36 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/utils/authContext.js";
+import { ThemeProvider } from "@/utils/Theme/ThemeProvider";
+import { Toaster } from "react-hot-toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+import {
+  Inter,
+  Playfair_Display,
+  Manrope,
+  Geist_Mono,
+} from "next/font/google";
+
+// Main body font
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Optional fonts
+export const playfair = Playfair_Display({
   subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+export const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+// Mono font
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata = {
@@ -18,11 +40,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+
+          {/* Toaster UI */}
+            <Toaster position="top-right" />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
