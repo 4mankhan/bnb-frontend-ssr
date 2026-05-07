@@ -166,8 +166,18 @@ function BookingCard({
 
         {/* CTA */}
         <button
-          onClick={onReserve}
-          disabled={!selectedRoom}
+         onClick={() =>
+    onReserve({
+      adults,
+      children,
+      infants,
+      checkIn,
+      checkOut,
+      total,
+    })
+  }
+  disabled={!selectedRoom}
+
           className={`mt-6 w-full py-3 rounded-xl text-sm font-medium transition
           ${
             selectedRoom

@@ -9,7 +9,7 @@ import { Pencil, Check, X } from "lucide-react";
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, logout, loading } = useAuth();
+  const { user, setUser, logout, loading } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,7 +31,9 @@ const fetchUserProfile = useCallback(async () => {
     });
 
     const data = await res.json();
+  
     if (!res.ok) throw new Error(data.error);
+      setUser(data);
 
     setFormData({
       name: data.name,
@@ -44,17 +46,18 @@ const fetchUserProfile = useCallback(async () => {
   } catch (err) {
     console.error(err);
   }
-}, [api]);
+}, [api,setUser]);
 
 useEffect(() => {
-  if (!loading && !user) {
+  if (loading) return;
+
+  if (!user) {
     router.push("/login");
+    return;
   }
 
-  if (user) {
-    fetchUserProfile(); //  always refresh from backend
-  }
-}, [user, loading, router, api, fetchUserProfile]);
+  fetchUserProfile();
+}, [loading, user, fetchUserProfile, router]); //
 
   const handleLogout = () => {
     logout();
@@ -83,6 +86,7 @@ const handleUpdate = async () => {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
+     setUser(data);
 
     // Update localStorage with fresh user
     localStorage.setItem("user", JSON.stringify(data));
@@ -93,6 +97,7 @@ const handleUpdate = async () => {
       email: data.email,
       password: "",
     });
+    
 
     setIsEditing(false);
 

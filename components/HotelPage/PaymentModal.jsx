@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function PaymentModal({
   isOpen,
@@ -13,6 +14,7 @@ export default function PaymentModal({
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+  
 
   const handlePayment = async () => {
     const token = localStorage.getItem("token");
@@ -42,8 +44,8 @@ export default function PaymentModal({
 
       onSuccess(res.data);
       onClose();
-    } catch (err) {
-      alert("Payment failed");
+    } catch (err) { 
+  toast.error(err?.response?.data?.message || "Payment failed");
     } finally {
       setLoading(false);
     }

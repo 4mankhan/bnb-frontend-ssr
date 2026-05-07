@@ -5,33 +5,12 @@ import Image from "next/image";
     import { Users, Baby, BedDouble } from "lucide-react";
 import { useAuth } from "@/utils/authContext";
 import { useRouter } from "next/navigation";
-import { useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 
 function Rooms({ rooms, selectedRoom, setSelectedRoom }) {
   const { user } = useAuth();
   // console.log("user loaded", user);
 const router = useRouter();
-const selectionRef = useRef(null);
-
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (
-      selectionRef.current &&
-      !selectionRef.current.contains(e.target)
-    ) {
-      setSelectedRoom(null);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [setSelectedRoom]);
-
-
 
 const handleSelect = (room) => {
   setSelectedRoom((prev) =>
@@ -138,7 +117,6 @@ const handleSelect = (room) => {
                     </p>
 
                     <button
-  ref={selectionRef}
  onClick={(e) => {
   e.stopPropagation();
 

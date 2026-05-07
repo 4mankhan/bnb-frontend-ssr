@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Children } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
@@ -33,15 +33,6 @@ const api = process.env.NEXT_PUBLIC_API_URL;
   const [checkOut, setCheckOut] = useState(defaultCheckOut);
 
 
-
-
-  const getNights = () => {
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    const diff = (end - start) / (1000 * 60 * 60 * 24);
-    return diff > 0 ? diff : 1;
-  };
-
   useEffect(() => {
     const fetchHotel = async () => {
       try {
@@ -70,7 +61,7 @@ const api = process.env.NEXT_PUBLIC_API_URL;
     if (id) fetchRooms();
   }, [id, api]);
 
-  const handleReserve = async () => {
+  const handleReserve = async (data) => {
     try {
       const token = localStorage.getItem("token"); //
       //console.log("handle reserve clicked", token);
@@ -81,7 +72,12 @@ const api = process.env.NEXT_PUBLIC_API_URL;
           roomId: selectedRoom._id,
           fromDate: checkIn,
           toDate: checkOut,
-          totalPrice: selectedRoom.basePrice * getNights(),
+          totalPrice: data.total,
+           guests: {
+        adults: data.adults,
+        children: data.children,
+        infants: data.infants,
+      },
         },
         {
           headers: {
