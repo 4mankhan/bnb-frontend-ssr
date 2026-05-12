@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
 
@@ -13,7 +13,7 @@ export default function BookingsPage() {
 
   const router = useRouter();
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     const token = localStorage.getItem("token");
 
     try {
@@ -30,11 +30,11 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
 
   useEffect(() => {
     fetchBookings();
-  });
+  }, [fetchBookings]);
 
   const handleCancel = async (id) => {
     const token = localStorage.getItem("token");
