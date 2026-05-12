@@ -17,7 +17,7 @@ export default function BookingsPage() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await axios.get(api`/booking/my-bookings`, {
+      const res = await axios.get(`${api}/booking/my-bookings`, {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -41,7 +41,7 @@ export default function BookingsPage() {
 
     try {
       await axios.patch(
-        api`/booking/cancel/${id}`,
+        `${api}/booking/cancel/${id}`,
         {}, // body
         {
           withCredentials: true,

@@ -126,7 +126,6 @@ export default function AccountPage() {
         </div>
 
         {/* Profile Header */}
-        {/* Profile Header */}
         <div className="flex items-start gap-6 mt-2">
           {/* Avatar */}
           <div className="w-20 h-20 rounded-full bg-rose-500 text-white flex items-center justify-center text-2xl font-bold shadow-md shrink-0">
