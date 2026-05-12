@@ -146,7 +146,7 @@ export default function HomeContent() {
       className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
     >
       <User size={16} />
-      Edit Profile
+      Profile
     </button>
 
     <button
