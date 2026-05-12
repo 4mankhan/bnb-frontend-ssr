@@ -7,9 +7,12 @@ import { useAuth } from "@/utils/authContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-function Rooms({ rooms, selectedRoom, setSelectedRoom }) {
+function Rooms({  rooms,
+  roomAvailability,
+  selectedRoom,
+  setSelectedRoom }) {
   const { user } = useAuth();
-  // console.log("user loaded", user);
+
 const router = useRouter();
 
 const handleSelect = (room) => {
@@ -30,6 +33,7 @@ const handleSelect = (room) => {
         <div className="space-y-10">
           {rooms.map((room) => {
             const isSelected = selectedRoom?._id === room._id;
+             const available = roomAvailability?.[room._id] ?? room.totalCount;
 
             return (
               <div
@@ -86,9 +90,10 @@ const handleSelect = (room) => {
     <Baby size={14} /> {room.capacity.infants} Infants
   </span>
 
-  <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/30 flex items-center gap-1">
-    <BedDouble size={14} /> {room.totalCount} Rooms
-  </span>
+<span className="px-3 py-1 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/30 flex items-center gap-1">
+  <BedDouble size={14} />
+  {available} Rooms Left
+</span>
 </div>
 
                   {/* Amenities */}

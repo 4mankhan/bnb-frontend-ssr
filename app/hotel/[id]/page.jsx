@@ -17,6 +17,7 @@ export default function HotelPage() {
   const [page, setPage] = useState(1);
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
+  const [roomAvailability, setRoomAvailability] = useState({});
 
 const api = process.env.NEXT_PUBLIC_API_URL;
 
@@ -95,6 +96,69 @@ const api = process.env.NEXT_PUBLIC_API_URL;
     }
   };
 
+  useEffect(() => {
+  const fetchInventory = async () => {
+    try {
+      if (!rooms.length) return;
+
+      const inventoryPromises = rooms.map(
+        async (room) => {
+          const res = await axios.get(
+            `${api}/inventory/availability`,
+            {
+              params: {
+                roomId: room._id,
+                fromDate: checkIn,
+                toDate: checkOut,
+              },
+            },
+          );
+
+          return {
+            roomId: room._id,
+            availableRooms:
+              res.data.data
+                .availableRooms,
+          };
+        },
+      );
+
+      const inventoryResults =
+        await Promise.all(
+          inventoryPromises,
+        );
+
+      const availabilityMap =
+        {};
+
+      inventoryResults.forEach(
+        (item) => {
+          availabilityMap[
+            item.roomId
+          ] =
+            item.availableRooms;
+        },
+      );
+
+      setRoomAvailability(
+        availabilityMap,
+      );
+    } catch (err) {
+      console.error(
+        "Inventory fetch failed",
+        err,
+      );
+    }
+  };
+
+  fetchInventory();
+}, [
+  rooms,
+  checkIn,
+  checkOut,
+  api,
+]);
+
   const onSuccess = () => {
   toast.success("Payment successful 🎉");
 
@@ -170,12 +234,18 @@ const api = process.env.NEXT_PUBLIC_API_URL;
           </section>
 
         {/* RIGHT CARD */}
-            <Rooms
-
-    rooms={rooms}
-    selectedRoom={selectedRoom}
-    setSelectedRoom={setSelectedRoom}
-  />
+           <Rooms
+  rooms={rooms}
+  roomAvailability={
+    roomAvailability
+  }
+  selectedRoom={
+    selectedRoom
+  }
+  setSelectedRoom={
+    setSelectedRoom
+  }
+/>
         </div>
 
 
