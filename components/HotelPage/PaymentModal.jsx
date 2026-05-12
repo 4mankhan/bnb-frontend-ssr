@@ -10,9 +10,11 @@ export default function PaymentModal({
   booking,
   onSuccess,
 }) {
+    const api = process.env.NEXT_PUBLIC_API_URL;
+
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
-
+ 
   if (!isOpen) return null;
   
 
@@ -27,7 +29,7 @@ export default function PaymentModal({
     setLoading(true);
     try {
   const res = await axios.post(
-    "http://localhost:3000/payment/process",
+    `${api}/payment/process`,
     {
       bookingId: booking._id,
       success: true,
