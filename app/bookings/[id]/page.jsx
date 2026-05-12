@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Home } from "lucide-react";
@@ -15,31 +15,14 @@ export default function BookingDetailsPage() {
 
  const api = process.env.NEXT_PUBLIC_API_URL;
 
-  const fetchBooking = async () => {
-    const token = localStorage.getItem("token");
+ 
 
-    try {
-      const res = await axios.get(api`/booking/${id}`, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setBooking(res.data.booking);
-    } catch (err) {
-      console.error("Error fetching booking:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchBooking = async () => {
+ 
+    const fetchBooking = useCallback( async () => {
       const token = localStorage.getItem("token");
 
       try {
-        const res = await axios.get(api`/booking/${id}`, {
+        const res = await axios.get(`${api}/booking/${id}`, {
           withCredentials: true,
           headers: {
             Authorization: `Bearer ${token}`,
@@ -52,10 +35,13 @@ export default function BookingDetailsPage() {
       } finally {
         setLoading(false);
       }
-    };
+    },[api, id]);
 
-    if (id) fetchBooking();
-  }, [id, api]);
+ useEffect(()=>{
+     fetchBooking();
+ },[fetchBooking])
+
+ 
 
   if (loading) {
     return (
