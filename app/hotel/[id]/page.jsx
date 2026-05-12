@@ -7,10 +7,11 @@ import axios from "axios";
 import BookingCard from "@/components/HotelPage/BookingCard";
 import PaymentModal from "@/components/HotelPage/PaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
-
+import toast from "react-hot-toast";
 
 export default function HotelPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [hotel, setHotel] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,7 @@ export default function HotelPage() {
   const [booking, setBooking] = useState(null);
   const [roomAvailability, setRoomAvailability] = useState({});
 
-const api = process.env.NEXT_PUBLIC_API_URL;
+  const api = process.env.NEXT_PUBLIC_API_URL;
 
   const today = new Date();
 
@@ -32,7 +33,6 @@ const api = process.env.NEXT_PUBLIC_API_URL;
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [checkIn, setCheckIn] = useState(defaultCheckIn);
   const [checkOut, setCheckOut] = useState(defaultCheckOut);
-
 
   useEffect(() => {
     const fetchHotel = async () => {
@@ -74,11 +74,11 @@ const api = process.env.NEXT_PUBLIC_API_URL;
           fromDate: checkIn,
           toDate: checkOut,
           totalPrice: data.total,
-           guests: {
-        adults: data.adults,
-        children: data.children,
-        infants: data.infants,
-      },
+          guests: {
+            adults: data.adults,
+            children: data.children,
+            infants: data.infants,
+          },
         },
         {
           headers: {
@@ -90,86 +90,83 @@ const api = process.env.NEXT_PUBLIC_API_URL;
       setBooking(res.data.booking);
       setShowPayment(true);
     } catch (err) {
-      console.log("FULL ERROR:", err);
-      console.log("SERVER ERROR:", err.response?.data);
-      alert(err.response?.data?.message || "Booking failed");
-    }
+  const error = err.response?.data;
+  const message = error?.message;
+
+  if (message?.includes("Room temporarily locked on")) {
+    const dateString = message.replace(
+      "Room temporarily locked on ",
+      ""
+    );
+
+    const time = new Date(dateString)
+      .toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+    toast("⚠️ This room is currently reserved by another guest. Please try again shortly.", {
+      duration: 4000,
+    });
+
+    return;
+  }
+
+  toast.error(message || "Booking failed");
+}
   };
 
   useEffect(() => {
-  const fetchInventory = async () => {
-    try {
-      if (!rooms.length) return;
+    const fetchInventory = async () => {
+      try {
+        if (!rooms.length) return;
 
-      const inventoryPromises = rooms.map(
-        async (room) => {
-          const res = await axios.get(
-            `${api}/inventory/availability`,
-            {
-              params: {
-                roomId: room._id,
-                fromDate: checkIn,
-                toDate: checkOut,
-              },
+        const inventoryPromises = rooms.map(async (room) => {
+          const res = await axios.get(`${api}/inventory/availability`, {
+            params: {
+              roomId: room._id,
+              fromDate: checkIn,
+              toDate: checkOut,
             },
-          );
+          });
 
           return {
             roomId: room._id,
-            availableRooms:
-              res.data.data
-                .availableRooms,
+            availableRooms: res.data.data.availableRooms,
           };
-        },
-      );
+        });
 
-      const inventoryResults =
-        await Promise.all(
-          inventoryPromises,
-        );
+        const inventoryResults = await Promise.all(inventoryPromises);
 
-      const availabilityMap =
-        {};
+        const availabilityMap = {};
 
-      inventoryResults.forEach(
-        (item) => {
-          availabilityMap[
-            item.roomId
-          ] =
-            item.availableRooms;
-        },
-      );
+        inventoryResults.forEach((item) => {
+          availabilityMap[item.roomId] = item.availableRooms;
+        });
 
-      setRoomAvailability(
-        availabilityMap,
-      );
-    } catch (err) {
-      console.error(
-        "Inventory fetch failed",
-        err,
-      );
-    }
-  };
+        setRoomAvailability(availabilityMap);
+      } catch (err) {
+        console.error("Inventory fetch failed", err);
+      }
+    };
 
-  fetchInventory();
-}, [
-  rooms,
-  checkIn,
-  checkOut,
-  api,
-]);
+    fetchInventory();
+  }, [rooms, checkIn, checkOut, api]);
 
   const onSuccess = () => {
-  toast.success("Payment successful 🎉");
+    toast.success("Payment successful 🎉");
 
-  // slight delay so user can see toast
-  setTimeout(() => {
-    router.push("/bookings");
-  }, 1500);
-};
+    setTimeout(() => {
+      router.push("/bookings");
+    }, 1500);
+  };
 
   if (loading) {
-    return <div className="p-10 text-center text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950 min-h-screen">Loading...</div>;
+    return (
+      <div className="p-10 text-center text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950 min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (!hotel) {
@@ -177,7 +174,7 @@ const api = process.env.NEXT_PUBLIC_API_URL;
   }
 
   return (
-  <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+    <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
       {/* HERO */}
 
       <section className="relative h-[70vh] w-full overflow-hidden">
@@ -211,7 +208,7 @@ const api = process.env.NEXT_PUBLIC_API_URL;
           {/* ABOUT */}
           <section>
             <h2 className="text-3xl font-serif mb-4">About this stay</h2>
-         <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+            <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
               Experience refined comfort at {hotel.name}, located in the heart
               of {hotel.city}. Designed for modern travelers, this space blends
               luxury, warmth, and thoughtful hospitality.
@@ -220,7 +217,9 @@ const api = process.env.NEXT_PUBLIC_API_URL;
 
           {/* AMENITIES */}
           <section>
-          <h2 className="text-3xl font-serif mb-4 text-gray-900 dark:text-gray-100">Basic Amenities</h2>
+            <h2 className="text-3xl font-serif mb-4 text-gray-900 dark:text-gray-100">
+              Basic Amenities
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {hotel.amenities?.map((a, i) => (
                 <div
@@ -233,33 +232,26 @@ const api = process.env.NEXT_PUBLIC_API_URL;
             </div>
           </section>
 
-        {/* RIGHT CARD */}
-           <Rooms
-  rooms={rooms}
-  roomAvailability={
-    roomAvailability
-  }
-  selectedRoom={
-    selectedRoom
-  }
-  setSelectedRoom={
-    setSelectedRoom
-  }
-/>
+          {/* RIGHT CARD */}
+          <Rooms
+            rooms={rooms}
+            roomAvailability={roomAvailability}
+            selectedRoom={selectedRoom}
+            setSelectedRoom={setSelectedRoom}
+          />
         </div>
 
-
         {/* RIGHT BOOKING CARD */}
-  {selectedRoom && (
-    <BookingCard
-      selectedRoom={selectedRoom}
-      checkIn={checkIn}
-      setCheckIn={setCheckIn}
-      setCheckOut={setCheckOut}
-      checkOut={checkOut}
-      onReserve={handleReserve}
-    />
-  )}
+        {selectedRoom && (
+          <BookingCard
+            selectedRoom={selectedRoom}
+            checkIn={checkIn}
+            setCheckIn={setCheckIn}
+            setCheckOut={setCheckOut}
+            checkOut={checkOut}
+            onReserve={handleReserve}
+          />
+        )}
 
         <PaymentModal
           isOpen={showPayment}

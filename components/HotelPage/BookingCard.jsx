@@ -141,7 +141,7 @@ function BookingCard({
                 className="absolute z-50 mt-2 w-full rounded-xl shadow-lg border 
     bg-white dark:bg-gray-900 
     border-gray-200 dark:border-gray-700 p-4 space-y-4"
-    ref={ref}
+                ref={ref}
               >
                 <Counter
                   label="Adults"
@@ -166,18 +166,17 @@ function BookingCard({
 
         {/* CTA */}
         <button
-         onClick={() =>
-    onReserve({
-      adults,
-      children,
-      infants,
-      checkIn,
-      checkOut,
-      total,
-    })
-  }
-  disabled={!selectedRoom}
-
+          onClick={() =>
+            onReserve({
+              adults,
+              children,
+              infants,
+              checkIn,
+              checkOut,
+              total,
+            })
+          }
+          disabled={!selectedRoom}
           className={`mt-6 w-full py-3 rounded-xl text-sm font-medium transition
           ${
             selectedRoom

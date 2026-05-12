@@ -2,25 +2,19 @@
 
 import React from "react";
 import Image from "next/image";
-    import { Users, Baby, BedDouble } from "lucide-react";
+import { Users, Baby, BedDouble } from "lucide-react";
 import { useAuth } from "@/utils/authContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-function Rooms({  rooms,
-  roomAvailability,
-  selectedRoom,
-  setSelectedRoom }) {
+function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
   const { user } = useAuth();
 
-const router = useRouter();
+  const router = useRouter();
 
-const handleSelect = (room) => {
-  setSelectedRoom((prev) =>
-    prev?._id === room._id ? null : room
-  );
-};
-
+  const handleSelect = (room) => {
+    setSelectedRoom((prev) => (prev?._id === room._id ? null : room));
+  };
 
   return (
     <section className="py-16">
@@ -33,7 +27,7 @@ const handleSelect = (room) => {
         <div className="space-y-10">
           {rooms.map((room) => {
             const isSelected = selectedRoom?._id === room._id;
-             const available = roomAvailability?.[room._id] ?? room.totalCount;
+            const available = roomAvailability?.[room._id] ?? room.totalCount;
 
             return (
               <div
@@ -75,26 +69,25 @@ const handleSelect = (room) => {
                   </h3>
 
                   {/* Capacity */}
-             
 
-<div className="flex flex-wrap gap-2 text-xs">
-  <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
-    <Users size={14} /> {room.capacity.adults} Adults
-  </span>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
+                      <Users size={14} /> {room.capacity.adults} Adults
+                    </span>
 
-  <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
-    <Users size={14} /> {room.capacity.children} Children
-  </span>
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
+                      <Users size={14} /> {room.capacity.children} Children
+                    </span>
 
-  <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
-    <Baby size={14} /> {room.capacity.infants} Infants
-  </span>
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center gap-1">
+                      <Baby size={14} /> {room.capacity.infants} Infants
+                    </span>
 
-<span className="px-3 py-1 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/30 flex items-center gap-1">
-  <BedDouble size={14} />
-  {available} Rooms Left
-</span>
-</div>
+                    <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/30 flex items-center gap-1">
+                      <BedDouble size={14} />
+                      {available} Rooms Left
+                    </span>
+                  </div>
 
                   {/* Amenities */}
                   <div className="flex flex-wrap gap-2 pt-2">
@@ -122,44 +115,47 @@ const handleSelect = (room) => {
                     </p>
 
                     <button
- onClick={(e) => {
-  e.stopPropagation();
+                      onClick={(e) => {
+                        e.stopPropagation();
 
-  if (!user) {
-    toast.error("Please login first to book a room", {
-      duration: 2000,
-    });
+                        if (!user) {
+                          toast.error("Please login first to book a room", {
+                            duration: 2000,
+                          });
 
-    setTimeout(() => {
-      router.push("/login");
-    }, 2000);
+                          setTimeout(() => {
+                            router.push("/login");
+                          }, 2000);
 
-    return;
-  }
+                          return;
+                        }
 
-  if (user.role === "owner") {
-    toast.error("Owners cannot book rooms. Please register as a user account.", {
-      duration: 2000,
-    });
+                        if (user.role === "owner") {
+                          toast.error(
+                            "Owners cannot book rooms. Please register as a user account.",
+                            {
+                              duration: 2000,
+                            },
+                          );
 
-    setTimeout(() => {
-      router.push("/signup");
-    }, 2000);
+                          setTimeout(() => {
+                            router.push("/signup");
+                          }, 2000);
 
-    return;
-  }
+                          return;
+                        }
 
-  handleSelect(room);
-}}
-  className={`px-5 py-2 rounded-full text-sm font-medium transition
+                        handleSelect(room);
+                      }}
+                      className={`px-5 py-2 rounded-full text-sm font-medium transition
   ${
     isSelected
       ? "bg-rose-500 text-white hover:bg-rose-600"
       : "bg-gray-900 text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
   }`}
->
-  {isSelected ? "Selected" : "Reserve"}
-</button>
+                    >
+                      {isSelected ? "Selected" : "Reserve"}
+                    </button>
                   </div>
                 </div>
               </div>

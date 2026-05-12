@@ -103,7 +103,6 @@ export default function AuthForm({ type = "login" }) {
                 onChange={handleChange}
                 className="w-full border text-rose-600 border-rose-500 p-3 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 mt-3"
               >
-                <option value="">Select Role</option>
                 <option value="user">User</option>
                 <option value="owner">Owner</option>
               </select>

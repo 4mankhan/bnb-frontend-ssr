@@ -25,30 +25,33 @@ export default function PaymentModal({
     }
 
     setLoading(true);
-
     try {
-      const res = await axios.post(
-        "http://localhost:3000/payment/process",
-        {
-          bookingId: booking._id,
-          success: true,
-          method: "mock",
-          pin,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      onSuccess(res.data);
-      onClose();
-    } catch (err) { 
-  toast.error(err?.response?.data?.message || "Payment failed");
-    } finally {
-      setLoading(false);
+  const res = await axios.post(
+    "http://localhost:3000/payment/process",
+    {
+      bookingId: booking._id,
+      success: true,
+      method: "mock",
+      pin,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
+  );
+
+  onSuccess();
+  onClose();
+
+} catch (err) {
+  console.error(err);
+  toast.error(
+    err?.response?.data?.message || "Payment failed"
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   return (
