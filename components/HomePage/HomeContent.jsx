@@ -28,6 +28,7 @@ import { useSearchParams } from "next/navigation";
 import SecondSearchBar from "@/components/HomePage/SecondSearchBar";
 import { useAuth } from "@/utils/authContext";
 import useResponsiveLimit from "@/utils/reposiveRateLimit";
+import  Loading  from "@/components/loading";
 
 const categories = [
   { label: "Beachfront", Icon: Waves },
@@ -44,6 +45,7 @@ export default function HomeContent() {
   const [hotels, setHotels] = useState([]);
   const [page, setPage] = useState(1);
   const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user, logout } = useAuth();
 
   const api = process.env.NEXT_PUBLIC_API_URL;
@@ -63,6 +65,7 @@ export default function HomeContent() {
   const limit  = useResponsiveLimit();
   useEffect(() => {
     const fetchHotels = async () => {
+      setLoading(true);
       try {
         let res;
 
@@ -83,6 +86,8 @@ export default function HomeContent() {
         setHotels(res.data.data || res.data);
       } catch (error) {
         console.error("Error fetching hotels:", error);
+      }finally{
+        setLoading(false);
       }
     };
 
@@ -93,6 +98,7 @@ export default function HomeContent() {
     logout();
     console.log("logout");
   };
+
 
   return (
     <main className="bg-white dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -250,7 +256,10 @@ export default function HomeContent() {
 
       {/* Listings Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+         {loading ? (
+    <Loading lines={10} className="px-4 pt-10" />
+  ) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
           {hotels.map((hotel) => (
             <div
               key={hotel._id}
@@ -324,7 +333,7 @@ export default function HomeContent() {
               </div>
             </div>
           ))}
-        </div>
+        </div>)}
       </section>
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">

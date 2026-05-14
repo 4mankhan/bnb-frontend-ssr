@@ -2,7 +2,7 @@
 
 export default function Pagination({ page, setPage }) {
   return (
-    <div className="flex justify-center items-center gap-6 my-10">
+    <div className="flex justify-center items-center gap-6 mb-10 md:mt-1">
       {/* Prev Button */}
       <button
         onClick={() => setPage((prev) => Math.max(prev - 1, 1))}

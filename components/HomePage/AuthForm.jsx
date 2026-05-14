@@ -8,7 +8,7 @@ import { useAuth } from "../../utils/authContext.js";
 import background from "@/public/images/bg.jpg";
 
 export default function AuthForm({ type = "login" }) {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+  const api = process.env.NEXT_PUBLIC_API_URL;
 
   const router = useRouter();
   const { login } = useAuth();

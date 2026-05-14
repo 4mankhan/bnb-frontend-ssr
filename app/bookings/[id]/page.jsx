@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Home } from "lucide-react";
+import  Loading  from "@/components/loading";
 
 export default function BookingDetailsPage() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function BookingDetailsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-gray-500">Loading booking...</div>
+       <Loading lines={10} className="px-4 pt-10" />
     );
   }
 
@@ -110,7 +111,10 @@ export default function BookingDetailsPage() {
             `${formatDate(booking.toDate)} • ${formatTime(booking.toDate)}`,
           ],
           ["Room Type", booking.room.type],
-          ["Guests", `${booking.room.capacity} Persons`],
+           [
+      "Guests",
+      `${booking.guests.adults} Adults, ${booking.guests.children} Children, ${booking.guests.infants} Infants`,
+    ],
         ].map(([label, value], i) => (
           <div key={i} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
             <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>

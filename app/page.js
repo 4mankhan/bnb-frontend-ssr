@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import HomeContent from "../components/HomePage/HomeContent";
+import LoadingState from "@/components/loading";
 
 function HomeFallback() {
   return (
@@ -9,9 +10,7 @@ function HomeFallback() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-3 animate-pulse">
-              <div className="aspect-square rounded-xl bg-gray-200 dark:bg-gray-800" />
-              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
-              <div className="h-3 bg-gray-100 dark:bg-gray-800/80 rounded w-1/2" />
+              <LoadingState lines={1} className="px-4 pt-10" />
             </div>
           ))}
         </div>

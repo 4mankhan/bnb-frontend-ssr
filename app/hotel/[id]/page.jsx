@@ -8,6 +8,7 @@ import BookingCard from "@/components/HotelPage/BookingCard";
 import PaymentModal from "@/components/HotelPage/PaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
 import toast from "react-hot-toast";
+import Loading from "@/components/loading";
 
 export default function HotelPage() {
   const { id } = useParams();
@@ -163,9 +164,7 @@ export default function HotelPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950 min-h-screen">
-        Loading...
-      </div>
+     <Loading lines={10} className="px-4 pt-12" />
     );
   }
 
