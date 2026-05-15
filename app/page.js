@@ -4,7 +4,7 @@ import LoadingState from "@/components/loading";
 
 function HomeFallback() {
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
+    <main className="min-h-screen bg-red-600 dark:bg-gray-950 transition-colors">
       <div className="sticky top-0 z-50 h-16 sm:h-20 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 animate-pulse" />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">

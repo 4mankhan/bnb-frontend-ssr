@@ -18,7 +18,11 @@ import {
   UserRound,
   SlidersHorizontal,
   Map,
-  User, Calendar, Home, LogOut, LogIn
+  User,
+  Calendar,
+  Home,
+  LogOut,
+  LogIn,
 } from "lucide-react";
 import Pagination from "@/components/HomePage/Pagination";
 import { useRouter } from "next/navigation";
@@ -28,7 +32,8 @@ import { useSearchParams } from "next/navigation";
 import SecondSearchBar from "@/components/HomePage/SecondSearchBar";
 import { useAuth } from "@/utils/authContext";
 import useResponsiveLimit from "@/utils/reposiveRateLimit";
-import  Loading  from "@/components/loading";
+import HotelCardSkeleton from "@/components/HotelCardSkeleton";
+import Hotels from "./Hotels";
 
 const categories = [
   { label: "Beachfront", Icon: Waves },
@@ -48,57 +53,57 @@ export default function HomeContent() {
   const [loading, setLoading] = useState(false);
   const { user, logout } = useAuth();
 
-  const api = process.env.NEXT_PUBLIC_API_URL;
-
-  const router = useRouter();
-
-  const searchParams = useSearchParams();
-
-  const location = searchParams.get("location");
-  const fromDate = searchParams.get("fromDate");
-  const toDate = searchParams.get("toDate");
-
-  const normalizedLocation = useMemo(() => {
-    return location?.trim().toLowerCase() || "";
-  }, [location]);
-
-  const limit  = useResponsiveLimit();
-  useEffect(() => {
-    const fetchHotels = async () => {
-      setLoading(true);
-      try {
-        let res;
-
-        if (normalizedLocation) {
-          res = await axios.get(`${api}/hotels/browse`, {
-            params: {
-              location: normalizedLocation,
-              fromDate,
-              toDate,
-            },
-          });
-        } else {
-          res = await axios.get(
-            `${api}/hotels?page=${page}&limit=${limit}`,
-          );
+  
+    const api = process.env.NEXT_PUBLIC_API_URL;
+  
+    const router = useRouter();
+  
+    const searchParams = useSearchParams();
+  
+    const location = searchParams.get("location");
+    const fromDate = searchParams.get("fromDate");
+    const toDate = searchParams.get("toDate");
+  
+    const normalizedLocation = useMemo(() => {
+      return location?.trim().toLowerCase() || "";
+    }, [location]);
+  
+    const limit = useResponsiveLimit();
+    useEffect(() => {
+      const fetchHotels = async () => {
+        setLoading(true);
+        try {
+          let res;
+  
+          if (normalizedLocation) {
+            res = await axios.get(`${api}/hotels/browse`, {
+              params: {
+                location: normalizedLocation,
+                fromDate,
+                toDate,
+              },
+            });
+          } else {
+            res = await axios.get(`${api}/hotels?page=${page}&limit=${limit}`);
+          }
+  
+          setHotels(res.data.data || res.data);
+        } catch (error) {
+          console.error("Error fetching hotels:", error);
+        } finally {
+          setLoading(false);
         }
+      };
+  
+      fetchHotels();
+    }, [page, normalizedLocation, fromDate, toDate, limit, api]);
+  
 
-        setHotels(res.data.data || res.data);
-      } catch (error) {
-        console.error("Error fetching hotels:", error);
-      }finally{
-        setLoading(false);
-      }
-    };
-
-    fetchHotels();
-  }, [page, normalizedLocation, fromDate, toDate, limit, api]);
 
   const handleLogout = () => {
     logout();
     console.log("logout");
   };
-
 
   return (
     <main className="bg-white dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -144,62 +149,61 @@ export default function HomeContent() {
                 </button>
 
                 {/* 👇 PLACE IT HERE */}
-               {showMenu && (
-  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 z-50">
-    
-    <button
-      onClick={() => router.push("/account")}
-      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
-    >
-      <User size={16} />
-      Profile
-    </button>
+                {showMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 z-50">
+                    <button
+                      onClick={() => router.push("/account")}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <User size={16} />
+                      Profile
+                    </button>
 
-    <button
-      onClick={() => {
-        if (!user) {
-          router.push("/login");
-          return;
-        }
-        router.push("/bookings");
-      }}
-      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
-    >
-      <Calendar size={16} />
-      All Bookings
-    </button>
+                    <button
+                      onClick={() => {
+                        if (!user) {
+                          router.push("/login");
+                          return;
+                        }
+                        router.push("/bookings");
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <Calendar size={16} />
+                      All Bookings
+                    </button>
 
-    <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                    <hr className="my-2 border-gray-200 dark:border-gray-700" />
 
-    <button
-      onClick={() => router.push("/owner")}
-      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-    >
-      <Home size={16} />
-      Become a host
-    </button>
+                    <button
+                      onClick={() => router.push("/owner")}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <Home size={16} />
+                      Become a host
+                    </button>
 
-    <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                    <hr className="my-2 border-gray-200 dark:border-gray-700" />
 
-    {user ? (
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-      >
-        <LogOut size={16} />
-        Logout
-      </button>
-    ) : (
-      <button
-        onClick={() => router.push("/login")}
-        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-      >
-        <LogIn size={16} />
-        Sign In
-      </button>
-    )}
-  </div>
-)}
+                    {user ? (
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <LogOut size={16} />
+                        Logout
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push("/login")}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <LogIn size={16} />
+                        Sign In
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -255,85 +259,8 @@ export default function HomeContent() {
       </div>
 
       {/* Listings Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-         {loading ? (
-    <Loading lines={10} className="px-4 pt-10" />
-  ) : (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-          {hotels.map((hotel) => (
-            <div
-              key={hotel._id}
-              className="group cursor-pointer"
-              onClick={() => router.push(`/hotel/${hotel._id}`)}
-            >
-              <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                <Image
-                  src={hotel.photos?.[0] || "/fallback.jpg"} //
-                  alt={hotel.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 rounded-full p-1.5 sm:p-2 bg-black/30 backdrop-blur-[2px] text-white hover:bg-black/45 hover:scale-110 active:scale-95 transition-transform"
-                  aria-label="Save to wishlist"
-                >
-                  <Heart
-                    className="h-4 w-4 sm:h-4.5 sm:w-4.5 shrink-0"
-                    strokeWidth={2}
-                    fill="currentColor"
-                    aria-hidden
-                  />
-                </button>
-
-                <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
-                  Popular
-                </div>
-              </div>
-
-              <div className="mt-3 space-y-0.5">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {hotel.name}
-                  </h3>
-
-                  <div className="flex text-gray-500 dark:text-gray-400 items-center gap-0.5 sm:gap-1 shrink-0">
-                    <Star
-                      className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 fill-amber-500"
-                      strokeWidth={1.5}
-                      aria-hidden
-                    />
-                    <span className="text-sm font-medium tabular-nums">
-                      4.8
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {hotel.city}
-                </p>
-
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {hotel.contactInfo?.location}
-                </p>
-
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  120 reviews
-                </p>
-
-                <p className="text-sm text-gray-900 dark:text-gray-100 pt-1">
-                  <span className="font-semibold">₹5,000</span>
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {" "}
-                    night
-                  </span>
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>)}
+      <section className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? <HotelCardSkeleton /> : <Hotels hotels={hotels} page={page} />}
       </section>
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">

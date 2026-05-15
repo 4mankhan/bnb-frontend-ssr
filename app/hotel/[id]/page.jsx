@@ -8,7 +8,7 @@ import BookingCard from "@/components/HotelPage/BookingCard";
 import PaymentModal from "@/components/HotelPage/PaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
 import toast from "react-hot-toast";
-import Loading from "@/components/loading";
+ import RoomCardSkeleton from "@/components/RoomCardSkeleton";
 
 export default function HotelPage() {
   const { id } = useParams();
@@ -164,7 +164,7 @@ export default function HotelPage() {
 
   if (loading) {
     return (
-     <Loading lines={10} className="px-4 pt-12" />
+     <RoomCardSkeleton/>
     );
   }
 
