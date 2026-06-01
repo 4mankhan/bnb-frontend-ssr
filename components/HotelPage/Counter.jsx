@@ -1,40 +1,76 @@
-export default function Counter({ label, value, setValue, min = 0 }) {
-  return (
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          {label}
-        </p>
-        <p className="text-xs text-gray-500">
-          {label === "Adults" && "Ages 13+"}
-          {label === "Children" && "Ages 2–12"}
-          {label === "Infants" && "Under 2"}
-        </p>
-            <hr className="my-2 border-gray-200 dark:border-gray-700" />
-      </div>
-      
-      <div className="flex items-center gap-3">
-        
-        <button
-          onClick={() => setValue(Math.max(min, value - 1))}
-          className="w-8 h-8 rounded-full border flex items-center justify-center 
-          hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          −
-        </button>
-   
-        <span className="w-5 text-center">{value}</span>
+export default function Counter({
+  label,
+  value,
+  setValue,
+  min = 0,
+}) {
+  const subtitle =
+    label === "Adults"
+      ? "Ages 13+"
+      : label === "Children"
+      ? "Ages 2–12"
+      : "Under 2";
 
-        <button
-          onClick={() => setValue(value + 1)}
-          className="w-8 h-8 rounded-full border flex items-center justify-center 
-          hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          +
-        </button>
-        
+  const canDecrease = value > min;
+
+  return (
+    <div className="py-3">
+      <div className="flex items-center justify-between">
+        {/* LEFT */}
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {label}
+          </h4>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {subtitle}
+          </p>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={!canDecrease}
+            onClick={() => setValue(Math.max(min, value - 1))}
+            className={`
+              w-10 h-10 rounded-full border
+              flex items-center justify-center
+              text-lg font-medium
+              transition-all
+              ${
+                canDecrease
+                  ? "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-white"
+                  : "border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+              }
+            `}
+          >
+            −
+          </button>
+
+          <span className="w-8 text-center text-base font-semibold text-gray-900 dark:text-white">
+            {value}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setValue(value + 1)}
+            className="
+              w-10 h-10 rounded-full border
+              border-gray-300 dark:border-gray-600
+              flex items-center justify-center
+              text-lg font-medium
+              text-gray-800 dark:text-white
+              hover:bg-gray-100 dark:hover:bg-gray-800
+              transition-all
+            "
+          >
+            +
+          </button>
+        </div>
       </div>
-      
+
+      <hr className="mt-4 border-gray-200 dark:border-gray-700" />
     </div>
   );
 }

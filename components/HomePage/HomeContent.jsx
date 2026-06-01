@@ -114,13 +114,13 @@ export default function HomeContent() {
         />
       )}
       {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-150 dark:border-gray-850 shadow-sm transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20">
+          <div className="flex flex-row justify-between items-center h-16 sm:h-20">
             {/* Logo */}
-            <div className="">
+            <div className="flex items-center">
               <h1
-                className="text-2xl font-bold text-rose-500 tracking-tight cursor-pointer"
+                className="text-2xl font-black text-rose-500 tracking-tight cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={(e) => router.push("/")}
               >
                 amanbnb
@@ -130,11 +130,11 @@ export default function HomeContent() {
             <SearchBar />
 
             {/* Right Nav */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex flex-row items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <button className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full px-4 py-2 transition-colors whitespace-nowrap">
+              {/* <button className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full px-4 py-2 transition-colors whitespace-nowrap">
                 Airbnb your home
-              </button>
+              </button> */}
 
               <div className="relative">
                 <button
@@ -206,10 +206,17 @@ export default function HomeContent() {
                 )}
               </div>
             </div>
+
           </div>
         </div>
 
-        <SecondSearchBar />
+       <div className="hidden lg:block">
+  <SearchBar />
+</div>
+
+<div className="lg:hidden">
+  <SecondSearchBar />
+</div>
       </header>
 
       {/* Category Filter Bar */}
