@@ -272,7 +272,7 @@ export default function HomeContent() {
           className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-900 text-white text-sm font-medium px-4 py-2.5 sm:px-5 sm:py-3 rounded-full shadow-lg transition-colors max-w-[calc(100vw-2rem)]"
         >
           <Map className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          <span className="truncate">Show map</span>
+          <span className="truncate"   onClick={() => window.open("https://google.com/maps", "_blank", "noopener,noreferrer")}>Show map</span>
         </button>
       </div>
       <Pagination page={page} setPage={setPage} />

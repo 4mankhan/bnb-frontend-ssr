@@ -62,7 +62,7 @@ const openToPicker = () => {
           <input
             type="text"
             placeholder="Search destinations"
-            className="w-full text-xs font-semibold text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-550 bg-transparent outline-none mt-0.5"
+            className="w-full text-xs font-semibold text-gray-800 dark:text-gray-100 placeholder-gray-100 dark:placeholder-gray-550 bg-transparent outline-none mt-0.5"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
