@@ -210,13 +210,9 @@ export default function HomeContent() {
           </div>
         </div>
 
-       <div className="hidden lg:block">
-  <SearchBar />
-</div>
 
-<div className="lg:hidden">
   <SecondSearchBar />
-</div>
+
       </header>
 
       {/* Category Filter Bar */}
