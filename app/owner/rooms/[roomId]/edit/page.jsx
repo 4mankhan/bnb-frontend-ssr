@@ -3,18 +3,14 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import {
-  useGetOwnerHotelsQuery,
-  useUpdateOwnerRoomMutation,
-} from "@/lib/api";
+import { useGetOwnerHotelsQuery, useUpdateOwnerRoomMutation } from "@/lib/api";
 import { baseApi } from "@/lib/api/baseApi";
+import uploadToCloudinary from "@/utils/uploadToCloudinary";
 
 const initialForm = {
   type: "",
   basePrice: "",
   amenities: "",
-  photo1: "",
-  photo2: "",
   totalCount: "",
   capacity: {
     adults: 2,
@@ -33,6 +29,8 @@ export default function EditRoomPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState(initialForm);
   const [hotelId, setHotelId] = useState(null);
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const { data: hotels = [], isLoading: isHotelsLoading } =
     useGetOwnerHotelsQuery();
@@ -77,14 +75,19 @@ export default function EditRoomPage() {
           basePrice: foundRoom.basePrice || "",
           totalCount: foundRoom.totalCount || "",
           amenities: (foundRoom.amenities || []).join(", "),
-          photo1: foundRoom.photos?.[0] || "",
-          photo2: foundRoom.photos?.[1] || "",
           capacity: {
             adults: foundRoom.capacity?.adults || 2,
             children: foundRoom.capacity?.children || 0,
             infants: foundRoom.capacity?.infants || 0,
           },
         });
+        setImages(
+          (foundRoom.photos || []).map((url) => ({
+            file: null,
+            preview: url,
+            uploaded: true,
+          })),
+        );
       } catch (err) {
         if (!cancelled) {
           setError(err?.message || "Could not load room.");
@@ -127,25 +130,45 @@ export default function EditRoomPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      roomId,
-      hotelId,
-      ...form,
-      basePrice: Number(form.basePrice),
-      totalCount: Number(form.totalCount),
-      amenities: form.amenities
-        .split(",")
-        .map((a) => a.trim())
-        .filter(Boolean),
-      photos: [form.photo1, form.photo2].filter(Boolean),
-    };
-
     try {
       setError("");
+
+      if (images.length !== 2) {
+        setError("Please keep exactly 2 images.");
+        return;
+      }
+      setUploading(true);
+
+      const uploadedUrls = await Promise.all(
+        images.map(async (image) => {
+          if (image.uploaded) {
+            return image.preview;
+          }
+
+          return uploadToCloudinary(image.file);
+        }),
+      );
+
+      const payload = {
+        roomId,
+        hotelId,
+        ...form,
+        basePrice: Number(form.basePrice),
+        totalCount: Number(form.totalCount),
+        amenities: form.amenities
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
+        photos: uploadedUrls,
+      };
+
       await updateOwnerRoom(payload).unwrap();
-      router.back();
+
+      // router.back();
     } catch (err) {
-      setError(err?.data?.message || "Could not update room.");
+      setError(err?.data?.message || err?.message || "Could not update room.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -197,19 +220,56 @@ export default function EditRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((image, index) => (
+            <div key={index} className="relative">
+              <img
+                src={image.preview}
+                alt={`Room ${index + 1}`}
+                className="h-40 md:h-80 w-full rounded-xl border object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setImages((prev) => prev.filter((_, i) => i !== index))
+                }
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <input
-            name="photo1"
-            value={form.photo1}
-            onChange={handleChange}
-            placeholder="Image URL 1"
-            className="w-full rounded-xl border px-3 py-2.5 text-sm"
-          />
-          <input
-            name="photo2"
-            value={form.photo2}
-            onChange={handleChange}
-            placeholder="Image URL 2"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+
+              if (!file) return;
+
+              setImages((prev) => {
+                const updated = [
+                  ...prev,
+                  {
+                    file,
+                    preview: URL.createObjectURL(file),
+                    uploaded: false,
+                  },
+                ];
+
+                if (updated.length > 2) {
+                  updated.shift();
+                }
+
+                return updated;
+              });
+
+              e.target.value = "";
+            }}
             className="w-full rounded-xl border px-3 py-2.5 text-sm"
           />
         </div>
@@ -256,10 +316,10 @@ export default function EditRoomPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || uploading}
           className="rounded-full bg-rose-500 px-5 py-2.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50"
         >
-          {submitting ? "Updating..." : "Update Room"}
+          {submitting || uploading ? "Updating..." : "Update Room"}
         </button>
       </form>
     </section>
