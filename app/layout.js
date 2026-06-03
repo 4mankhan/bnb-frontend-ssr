@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AuthProvider } from "@/utils/authContext.js";
 import { ThemeProvider } from "@/utils/Theme/ThemeProvider";
+import StoreProvider from "@/lib/store/StoreProvider";
 import { Toaster } from "react-hot-toast";
 
 import {
@@ -48,12 +49,14 @@ export default function RootLayout({ children }) {
         className={`${inter.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <AuthProvider>
-            {children}
+          <StoreProvider>
+            <AuthProvider>
+              {children}
 
           {/* Toaster UI */}
-            <Toaster position="top-right" />
-          </AuthProvider>
+              <Toaster position="top-right" />
+            </AuthProvider>
+          </StoreProvider>
         </ThemeProvider>
       </body>
     </html>

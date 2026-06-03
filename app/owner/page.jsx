@@ -1,69 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
-}
+import { useMemo } from "react";
+import { useGetProfileQuery, useGetOwnerHotelsQuery } from "@/lib/api";
 
 export default function OwnerDashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [profile, setProfile] = useState(null);
-  const [hotels, setHotels] = useState([]);
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
+    error: profileError,
+  } = useGetProfileQuery();
 
+  const {
+    data: hotels = [],
+    isLoading: isHotelsLoading,
+    isError: isHotelsError,
+    error: hotelsError,
+  } = useGetOwnerHotelsQuery();
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      const token = getAccessToken();
-      if (!token) {
-        setLoading(false);
-        setError("No access token found.");
-        return;
-      }
+  const loading = isProfileLoading || isHotelsLoading;
+  const error =
+    isProfileError || isHotelsError
+      ? profileError?.data?.message ||
+        hotelsError?.data?.message ||
+        "Failed to load dashboard."
+      : "";
 
-      try {
-        setLoading(true);
-        setError("");
+  const total = hotels.length;
 
-        const [profileRes, hotelsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/auth/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE_URL}/owner/hotels`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+  const active = useMemo(() => {
+    return hotels.filter((h) => h.active).length;
+  }, [hotels]);
 
-        if (!profileRes.ok) throw new Error("Unable to load profile.");
-        if (!hotelsRes.ok) throw new Error("Unable to load hotels.");
-
-        const profileData = await profileRes.json();
-        const hotelsData = await hotelsRes.json();
-
-        setProfile(profileData?.data || profileData?.user || profileData);
-        setHotels(hotelsData?.data || hotelsData || []);
-      } catch (err) {
-        setError(err.message || "Failed to load dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, []);
-
-const total = hotels.length;
-
-const active = useMemo(() => {
-  return hotels.filter(h => h.active).length;
-}, [hotels]);
-
-const inactive = total - active;
+  const inactive = total - active;
 
   if (loading) {
     return (
@@ -90,15 +60,23 @@ const inactive = total - active;
   return (
     <section className="space-y-5">
       <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
-        <h2 className="text-2xl font-semibold">Welcome, {profile?.name || "Owner"}</h2>
+        <h2 className="text-2xl font-semibold">
+          Welcome, {profile?.name || "Owner"}
+        </h2>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
           Manage hotels, rooms, and activation status from one place.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/owner/hotels" className="rounded-full bg-rose-500 text-white px-4 py-2 text-sm hover:bg-rose-600">
+          <Link
+            href="/owner/hotels"
+            className="rounded-full bg-rose-500 text-white px-4 py-2 text-sm hover:bg-rose-600"
+          >
             Manage Hotels
           </Link>
-          <Link href="/owner/hotels/new" className="rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
+          <Link
+            href="/owner/hotels/new"
+            className="rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
             Add New Hotel
           </Link>
         </div>
@@ -114,8 +92,13 @@ const inactive = total - active;
           <p className="text-3xl font-semibold mt-2 text-green-600"> {active}</p>
         </div>
         <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Inactive Hotels</p>
-          <p className="text-3xl font-semibold mt-2 text-amber-600"> {inactive || 0}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Inactive Hotels
+          </p>
+          <p className="text-3xl font-semibold mt-2 text-amber-600">
+            {" "}
+            {inactive || 0}
+          </p>
         </div>
       </div>
     </section>

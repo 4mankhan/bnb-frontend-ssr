@@ -1,47 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
-}
+import { useGetOwnerHotelsQuery } from "@/lib/api";
 
 export default function OwnerHotelsPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [hotels, setHotels] = useState([]);
+  const {
+    data: hotels = [],
+    isLoading,
+    isError,
+    error,
+  } = useGetOwnerHotelsQuery();
 
-  useEffect(() => {
-    const fetchHotels = async () => {
-      const token = getAccessToken();
-      try {
-        setLoading(true);
-        setError("");
-
-        const res = await fetch(`${API_BASE_URL}/owner/hotels`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch hotels.");
-        const data = await res.json();
-        setHotels(data?.data || data || []);
-      } catch (err) {
-        setError(err.message || "Could not load your hotels.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHotels();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid gap-4">
         <div className="h-24 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 animate-pulse" />
@@ -50,11 +20,13 @@ export default function OwnerHotelsPage() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-red-700">
         <p className="font-semibold">Hotels error</p>
-        <p className="text-sm mt-1">{error}</p>
+        <p className="text-sm mt-1">
+          {error?.data?.message || "Could not load your hotels."}
+        </p>
       </div>
     );
   }
@@ -86,7 +58,9 @@ export default function OwnerHotelsPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-semibold text-lg">{hotel.name || "Untitled hotel"}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {hotel.name || "Untitled hotel"}
+                  </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {hotel.city || "Unknown city"}
                   </p>

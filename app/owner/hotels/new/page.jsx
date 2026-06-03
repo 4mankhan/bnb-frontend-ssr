@@ -2,13 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
-}
+import { useCreateOwnerHotelMutation } from "@/lib/api";
 
 const initialForm = {
   name: "",
@@ -26,13 +20,13 @@ const initialForm = {
 export default function CreateHotelPage() {
   const router = useRouter();
   const [form, setForm] = useState(initialForm);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [createOwnerHotel, { isLoading: submitting }] =
+    useCreateOwnerHotelMutation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Handle nested contactInfo fields
     if (name.startsWith("contactInfo.")) {
       const key = name.split(".")[1];
       setForm((prev) => ({
@@ -49,40 +43,26 @@ export default function CreateHotelPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = getAccessToken();
 
     try {
-      setSubmitting(true);
       setError("");
 
       const payload = {
         ...form,
-        photos: form.photos.split(",").map((p) => p.trim()).filter(Boolean),
-          amenities: form.amenities
-    .split(",")
-    .map((a) => a.trim())
-    .filter(Boolean),
+        photos: form.photos
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean),
+        amenities: form.amenities
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
       };
 
-      const res = await fetch(`${API_BASE_URL}/owner/hotels`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to create hotel.");
-      }
-
+      await createOwnerHotel(payload).unwrap();
       router.push("/owner/hotels");
     } catch (err) {
-      setError(err.message || "Failed to create hotel.");
-    } finally {
-      setSubmitting(false);
+      setError(err?.data?.message || "Failed to create hotel.");
     }
   };
 
@@ -99,7 +79,6 @@ export default function CreateHotelPage() {
         onSubmit={handleSubmit}
         className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-3 shadow-sm"
       >
-        {/* Basic Info */}
         <input
           name="name"
           value={form.name}
@@ -118,7 +97,6 @@ export default function CreateHotelPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        {/* Photos & Amenities */}
         <input
           name="photos"
           value={form.photos}
@@ -135,7 +113,6 @@ export default function CreateHotelPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        {/* Contact Info */}
         <h3 className="font-medium mt-3">Contact Info</h3>
 
         <input

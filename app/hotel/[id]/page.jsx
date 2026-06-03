@@ -1,32 +1,35 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import axios from "axios";
 import BookingCard from "@/components/HotelPage/BookingCard";
 import PaymentModal from "@/components/HotelPage/PaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
 import toast from "react-hot-toast";
 import RoomCardSkeleton from "@/components/RoomCardSkeleton";
 import ThemeToggle from "@/utils/Theme/ThemeToggle";
-import { ArrowLeft, Sparkles, MapPin, Star, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, Sparkles, MapPin, X } from "lucide-react";
+import {
+  useGetHotelByIdQuery,
+  useGetRoomsByHotelQuery,
+  useCreateBookingMutation,
+} from "@/lib/api";
+import { useRoomAvailability } from "@/lib/hooks/useRoomAvailability";
+import Footer from "@/components/Footer";
 
 export default function HotelPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [hotel, setHotel] = useState(null);
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
-  const [roomAvailability, setRoomAvailability] = useState({});
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  const api = process.env.NEXT_PUBLIC_API_URL;
-
   const today = useMemo(() => new Date(), []);
-  const defaultCheckIn = useMemo(() => today.toISOString().split("T")[0], [today]);
+  const defaultCheckIn = useMemo(
+    () => today.toISOString().split("T")[0],
+    [today],
+  );
 
   const defaultCheckOut = useMemo(() => {
     const tomorrow = new Date(today);
@@ -38,7 +41,6 @@ export default function HotelPage() {
   const [checkIn, setCheckIn] = useState(defaultCheckIn);
   const [checkOut, setCheckOut] = useState(defaultCheckOut);
 
-  // Ratings & Reviews consistently calculated
   const rating = useMemo(() => {
     if (!id) return "4.8";
     const code = id.toString().slice(-2);
@@ -53,110 +55,49 @@ export default function HotelPage() {
     return (parsed % 180) + 24;
   }, [id]);
 
-  useEffect(() => {
-    const fetchHotel = async () => {
-      try {
-        const res = await axios.get(`${api}/hotels/${id}`);
-        setHotel(res.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data: hotel,
+    isLoading: isHotelLoading,
+    isError: isHotelError,
+  } = useGetHotelByIdQuery(id, { skip: !id });
 
-    if (id) fetchHotel();
-  }, [id, api]);
+  const { data: rooms = [] } = useGetRoomsByHotelQuery(id, { skip: !id });
 
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const res = await axios.get(`${api}/rooms/hotel/${id}`);
-        setRooms(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  const { roomAvailability } = useRoomAvailability(rooms, checkIn, checkOut);
 
-    if (id) fetchRooms();
-  }, [id, api]);
+  const [createBooking] = useCreateBookingMutation();
 
   const handleReserve = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${api}/booking/create`,
-        {
-          hotelId: hotel._id,
-          roomId: selectedRoom._id,
-          fromDate: checkIn,
-          toDate: checkOut,
-          totalPrice: data.total,
-          guests: {
-            adults: data.adults,
-            children: data.children,
-            infants: data.infants,
-          },
+      const result = await createBooking({
+        hotelId: hotel._id,
+        roomId: selectedRoom._id,
+        fromDate: checkIn,
+        toDate: checkOut,
+        totalPrice: data.total,
+        guests: {
+          adults: data.adults,
+          children: data.children,
+          infants: data.infants,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      }).unwrap();
 
-      setBooking(res.data.booking);
+      setBooking(result.booking);
       setShowPayment(true);
     } catch (err) {
-      const error = err.response?.data;
-      const message = error?.message;
+      const message = err?.data?.message;
 
       if (message?.includes("Room temporarily locked on")) {
-        toast("⚠️ This room is currently reserved by another guest. Please try again shortly.", {
-          duration: 4000,
-        });
+        toast(
+          "⚠️ This room is currently reserved by another guest. Please try again shortly.",
+          { duration: 4000 },
+        );
         return;
       }
 
       toast.error(message || "Booking failed");
     }
   };
-
-  useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        if (!rooms.length) return;
-
-        const inventoryPromises = rooms.map(async (room) => {
-          const res = await axios.get(`${api}/inventory/availability`, {
-            params: {
-              roomId: room._id,
-              fromDate: checkIn,
-              toDate: checkOut,
-            },
-          });
-
-          return {
-            roomId: room._id,
-            availableRooms: res.data.data.availableRooms,
-          };
-        });
-
-        const inventoryResults = await Promise.all(inventoryPromises);
-        const availabilityMap = {};
-
-        inventoryResults.forEach((item) => {
-          availabilityMap[item.roomId] = item.availableRooms;
-        });
-
-        setRoomAvailability(availabilityMap);
-      } catch (err) {
-        console.error("Inventory fetch failed", err);
-      }
-    };
-
-    fetchInventory();
-  }, [rooms, checkIn, checkOut, api]);
 
   const onSuccess = () => {
     toast.success("Payment successful 🎉");
@@ -166,11 +107,11 @@ export default function HotelPage() {
     }, 1500);
   };
 
-  if (loading) {
+  if (isHotelLoading) {
     return <RoomCardSkeleton />;
   }
 
-  if (!hotel) {
+  if (isHotelError || !hotel) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
         <p className="text-lg font-bold">Stay not found</p>
@@ -185,9 +126,7 @@ export default function HotelPage() {
   }
 
   return (
-    <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-150 min-h-screen transition-colors duration-200 pb-24 lg:pb-12">
-      
-      {/* Sticky Header Nav */}
+    <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-150 min-h-screen transition-colors duration-200 pb-0 lg:pb-0">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-150 dark:border-gray-850 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-row justify-between items-center h-16">
@@ -195,7 +134,10 @@ export default function HotelPage() {
               onClick={() => router.push("/")}
               className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-rose-500 transition-colors cursor-pointer group"
             >
-              <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft
+                size={16}
+                className="group-hover:-translate-x-0.5 transition-transform"
+              />
               <span>Stays</span>
             </button>
 
@@ -213,7 +155,6 @@ export default function HotelPage() {
         </div>
       </header>
 
-      {/* HERO SECTION */}
       <section className="relative h-[55vh] md:h-[65vh] w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
         <Image
           src={hotel.photos?.[0] || "/fallback.jpg"}
@@ -224,10 +165,8 @@ export default function HotelPage() {
           className="object-cover scale-102"
         />
 
-        {/* Premium Dark Vignette Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 to-transparent z-10" />
 
-        {/* Floating details content at bottom of Hero */}
         <div className="absolute bottom-8 left-4 right-4 md:left-12 max-w-4xl z-20 text-white space-y-3">
           <div className="flex items-center gap-2">
             <span className="bg-rose-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
@@ -237,11 +176,11 @@ export default function HotelPage() {
               ⭐ {rating} · {reviewsCount} reviews
             </span>
           </div>
-          
+
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
             {hotel.name}
           </h2>
-          
+
           <p className="text-xs md:text-sm font-medium opacity-90 flex items-center gap-1.5 drop-shadow-xs">
             <MapPin size={14} className="text-rose-400 shrink-0" />
             {hotel.city} · Prime Location Stay
@@ -249,26 +188,28 @@ export default function HotelPage() {
         </div>
       </section>
 
-      {/* MAIN LAYOUT GRID */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-          
-          {/* LEFT CONTENT (About, Amenities, Rooms list) */}
           <div className="lg:col-span-2 space-y-10">
-            {/* ABOUT */}
             <section className="bg-gray-50/50 dark:bg-gray-900/40 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
                 <Sparkles className="h-5 w-5 text-rose-500 shrink-0" />
                 About this stay
               </h2>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                Experience refined comfort at <span className="font-bold text-gray-800 dark:text-white">{hotel.name}</span>, located in the heart
-                of <span className="font-bold text-gray-800 dark:text-white">{hotel.city}</span>. Designed for modern travelers, this space blends
-                luxury, warmth, and thoughtful hospitality. Enjoy modern design highlights and stellar service standard throughout your stay.
+                Experience refined comfort at{" "}
+                <span className="font-bold text-gray-800 dark:text-white">
+                  {hotel.name}
+                </span>
+                , located in the heart of{" "}
+                <span className="font-bold text-gray-800 dark:text-white">
+                  {hotel.city}
+                </span>
+                . Designed for modern travelers, this space blends luxury,
+                warmth, and thoughtful hospitality.
               </p>
             </section>
 
-            {/* AMENITIES */}
             <section className="space-y-4">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Basic Amenities
@@ -288,7 +229,6 @@ export default function HotelPage() {
 
             <hr className="border-gray-100 dark:border-gray-800" />
 
-            {/* AVAILABLE ROOMS */}
             <Rooms
               rooms={rooms}
               roomAvailability={roomAvailability}
@@ -297,7 +237,6 @@ export default function HotelPage() {
             />
           </div>
 
-          {/* RIGHT SIDEBAR (Desktop only) */}
           <div className="hidden lg:block lg:col-span-1">
             {!selectedRoom ? (
               <div className="sticky top-24 h-fit">
@@ -306,9 +245,12 @@ export default function HotelPage() {
                     ✨
                   </div>
                   <div className="space-y-1 px-2">
-                    <h3 className="text-sm font-bold text-gray-950 dark:text-white">Begin reservation</h3>
+                    <h3 className="text-sm font-bold text-gray-950 dark:text-white">
+                      Begin reservation
+                    </h3>
                     <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">
-                      Select one of the premium available spaces below to customize dates, specify guests, and confirm your booking.
+                      Select one of the premium available spaces below to
+                      customize dates, specify guests, and confirm your booking.
                     </p>
                   </div>
                   <div className="pt-2">
@@ -329,11 +271,9 @@ export default function HotelPage() {
               />
             )}
           </div>
-
         </div>
       </div>
 
-      {/* MOBILE STICKY BOTTOM BAR */}
       {selectedRoom && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 px-6 py-4.5 flex items-center justify-between shadow-xl lg:hidden">
           <div className="flex flex-col">
@@ -342,7 +282,10 @@ export default function HotelPage() {
             </span>
             <span className="text-base font-black text-gray-950 dark:text-white mt-0.5">
               ₹{selectedRoom.basePrice.toLocaleString("en-IN")}
-              <span className="text-xs font-medium text-gray-400 dark:text-gray-500"> / night</span>
+              <span className="text-xs font-medium text-gray-400 dark:text-gray-500">
+                {" "}
+                / night
+              </span>
             </span>
           </div>
           <button
@@ -355,16 +298,17 @@ export default function HotelPage() {
         </div>
       )}
 
-      {/* MOBILE DRAWER SHEET OVERLAY */}
       {isMobileDrawerOpen && selectedRoom && (
         <div className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-xs flex items-end">
           <div className="w-full bg-white dark:bg-gray-900 rounded-t-3xl p-6 border-t border-gray-150 dark:border-gray-800 shadow-2xl overflow-y-auto max-h-[85vh] transition-all">
-            
-            {/* Drawer Header */}
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-6">
               <div>
-                <h3 className="text-base font-bold text-gray-950 dark:text-white">Customize Reservation</h3>
-                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">{selectedRoom.type}</p>
+                <h3 className="text-base font-bold text-gray-950 dark:text-white">
+                  Customize Reservation
+                </h3>
+                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                  {selectedRoom.type}
+                </p>
               </div>
               <button
                 type="button"
@@ -375,7 +319,6 @@ export default function HotelPage() {
               </button>
             </div>
 
-            {/* Booking Card Body content inside the Drawer Sheet */}
             <BookingCard
               selectedRoom={selectedRoom}
               checkIn={checkIn}
@@ -391,13 +334,13 @@ export default function HotelPage() {
         </div>
       )}
 
-      {/* PAYMENT MODAL */}
       <PaymentModal
         isOpen={showPayment}
         booking={booking}
         onClose={() => setShowPayment(false)}
         onSuccess={onSuccess}
       />
+      <Footer/>
     </main>
   );
 }

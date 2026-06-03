@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Waves,
   Mountain,
@@ -12,8 +11,6 @@ import {
   Sparkles,
   Tent,
   Landmark,
-  Heart,
-  Star,
   Menu,
   UserRound,
   SlidersHorizontal,
@@ -34,6 +31,8 @@ import { useAuth } from "@/utils/authContext";
 import useResponsiveLimit from "@/utils/reposiveRateLimit";
 import HotelCardSkeleton from "@/components/HotelCardSkeleton";
 import Hotels from "./Hotels";
+import { useGetHotelsQuery, useBrowseHotelsQuery } from "@/lib/api";
+import Footer from "@/components/Footer";
 
 const categories = [
   { label: "Beachfront", Icon: Waves },
@@ -47,62 +46,48 @@ const categories = [
 ];
 
 export default function HomeContent() {
-  const [hotels, setHotels] = useState([]);
   const [page, setPage] = useState(1);
   const [showMenu, setShowMenu] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { user, logout } = useAuth();
 
-  
-    const api = process.env.NEXT_PUBLIC_API_URL;
-  
-    const router = useRouter();
-  
-    const searchParams = useSearchParams();
-  
-    const location = searchParams.get("location");
-    const fromDate = searchParams.get("fromDate");
-    const toDate = searchParams.get("toDate");
-  
-    const normalizedLocation = useMemo(() => {
-      return location?.trim().toLowerCase() || "";
-    }, [location]);
-  
-    const limit = useResponsiveLimit();
-    useEffect(() => {
-      const fetchHotels = async () => {
-        setLoading(true);
-        try {
-          let res;
-  
-          if (normalizedLocation) {
-            res = await axios.get(`${api}/hotels/browse`, {
-              params: {
-                location: normalizedLocation,
-                fromDate,
-                toDate,
-              },
-            });
-          } else {
-            res = await axios.get(`${api}/hotels?page=${page}&limit=${limit}`);
-          }
-  
-          setHotels(res.data.data || res.data);
-        } catch (error) {
-          console.error("Error fetching hotels:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchHotels();
-    }, [page, normalizedLocation, fromDate, toDate, limit, api]);
-  
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
+  const location = searchParams.get("location");
+  const fromDate = searchParams.get("fromDate");
+  const toDate = searchParams.get("toDate");
+
+  const normalizedLocation = useMemo(() => {
+    return location?.trim().toLowerCase() || "";
+  }, [location]);
+
+  const limit = useResponsiveLimit();
+
+  const {
+    data: browseHotels = [],
+    isLoading: isBrowseLoading,
+    isFetching: isBrowseFetching,
+  } = useBrowseHotelsQuery(
+    { location: normalizedLocation, fromDate, toDate },
+    { skip: !normalizedLocation },
+  );
+
+  const {
+    data: listedHotels = [],
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+  } = useGetHotelsQuery(
+    { page, limit },
+    { skip: !!normalizedLocation },
+  );
+
+  const hotels = normalizedLocation ? browseHotels : listedHotels;
+  const loading = normalizedLocation
+    ? isBrowseLoading || isBrowseFetching
+    : isListLoading || isListFetching;
 
   const handleLogout = () => {
     logout();
-    console.log("logout");
   };
 
   return (
@@ -113,15 +98,13 @@ export default function HomeContent() {
           onClick={() => setShowMenu(false)}
         />
       )}
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-150 dark:border-gray-850 shadow-sm transition-all duration-200">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-xs dark:shadow-gray-500/60  transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-row justify-between items-center h-16 sm:h-20">
-            {/* Logo */}
             <div className="flex items-center">
               <h1
                 className="text-2xl font-black text-rose-500 tracking-tight cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={(e) => router.push("/")}
+                onClick={() => router.push("/")}
               >
                 amanbnb
               </h1>
@@ -129,12 +112,8 @@ export default function HomeContent() {
 
             <SearchBar />
 
-            {/* Right Nav */}
             <div className="flex flex-row items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              {/* <button className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full px-4 py-2 transition-colors whitespace-nowrap">
-                Airbnb your home
-              </button> */}
 
               <div className="relative">
                 <button
@@ -148,7 +127,6 @@ export default function HomeContent() {
                   </div>
                 </button>
 
-                {/* 👇 PLACE IT HERE */}
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 z-50">
                     <button
@@ -206,17 +184,13 @@ export default function HomeContent() {
                 )}
               </div>
             </div>
-
           </div>
         </div>
 
-
-  <SecondSearchBar />
-
+        <SecondSearchBar />
       </header>
 
-      {/* Category Filter Bar */}
-      <div className="border-b border-gray-200 dark:border-gray-800 sticky top-16 sm:top-20 z-40 bg-white dark:bg-gray-950">
+      <div className="border-b border-gray-300 dark:border-gray-700 shadow-sm dark:shadow-xs dark:shadow-gray-500/60 sticky top-16 sm:top-20 z-40 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6 md:gap-20 sm:gap-8 py-4 overflow-x-auto scrollbar-hide">
             {categories.map((cat, i) => {
@@ -243,7 +217,6 @@ export default function HomeContent() {
               );
             })}
 
-            {/* Filter Button */}
             <div className="ml-auto pl-4 border-l border-gray-200 dark:border-gray-800">
               <button
                 type="button"
@@ -261,7 +234,6 @@ export default function HomeContent() {
         </div>
       </div>
 
-      {/* Listings Grid */}
       <section className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? <HotelCardSkeleton /> : <Hotels hotels={hotels} page={page} />}
       </section>
@@ -272,10 +244,22 @@ export default function HomeContent() {
           className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-900 text-white text-sm font-medium px-4 py-2.5 sm:px-5 sm:py-3 rounded-full shadow-lg transition-colors max-w-[calc(100vw-2rem)]"
         >
           <Map className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          <span className="truncate"   onClick={() => window.open("https://google.com/maps", "_blank", "noopener,noreferrer")}>Show map</span>
+          <span
+            className="truncate"
+            onClick={() =>
+              window.open(
+                "https://google.com/maps",
+                "_blank",
+                "noopener,noreferrer",
+              )
+            }
+          >
+            Show map
+          </span>
         </button>
       </div>
       <Pagination page={page} setPage={setPage} />
+      <Footer/>
     </main>
   );
 }

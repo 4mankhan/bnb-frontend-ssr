@@ -2,13 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
-}
+import { useCreateOwnerRoomMutation } from "@/lib/api";
 
 const initialForm = {
   type: "",
@@ -29,8 +23,9 @@ export default function CreateRoomPage() {
   const hotelId = params?.hotelId;
 
   const [form, setForm] = useState(initialForm);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [createOwnerRoom, { isLoading: submitting }] =
+    useCreateOwnerRoomMutation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,39 +46,29 @@ export default function CreateRoomPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = getAccessToken();
 
     const payload = {
+      hotelId,
       ...form,
       basePrice: Number(form.basePrice),
       totalCount: Number(form.totalCount),
-      amenities: form.amenities.split(",").map((a) => a.trim()).filter(Boolean),
-      photos: form.photos.split(",").map((p) => p.trim()).filter(Boolean).slice(0, 2),
+      amenities: form.amenities
+        .split(",")
+        .map((a) => a.trim())
+        .filter(Boolean),
+      photos: form.photos
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .slice(0, 2),
     };
 
     try {
-      setSubmitting(true);
       setError("");
-
-      const res = await fetch(`${API_BASE_URL}/owner/hotels/${hotelId}/rooms`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to create room.");
-      }
-
+      await createOwnerRoom(payload).unwrap();
       router.push(`/owner/hotels/${hotelId}`);
     } catch (err) {
-      setError(err.message || "Could not create room.");
-    } finally {
-      setSubmitting(false);
+      setError(err?.data?.message || "Could not create room.");
     }
   };
 
@@ -100,7 +85,6 @@ export default function CreateRoomPage() {
         onSubmit={handleSubmit}
         className="rounded-2xl border bg-white dark:bg-gray-900 p-5 space-y-3 shadow-sm"
       >
-        {/* Basic */}
         <input
           name="type"
           value={form.type}
@@ -130,25 +114,14 @@ export default function CreateRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        {/* Photos */}
-        <div className="grid gap-3 sm:grid-cols-2">
-  <input
-    name="photo1"
-    value={form.photo1 || ""}
-    onChange={handleChange}
-    placeholder="Image URL 1"
-    className="w-full rounded-xl border px-3 py-2.5 text-sm"
-  />
-  <input
-    name="photo2"
-    value={form.photo2 || ""}
-    onChange={handleChange}
-    placeholder="Image URL 2"
-    className="w-full rounded-xl border px-3 py-2.5 text-sm"
-  />
-</div>
+        <input
+          name="photos"
+          value={form.photos}
+          onChange={handleChange}
+          placeholder="Image URLs (comma separated, max 2)"
+          className="w-full rounded-xl border px-3 py-2.5 text-sm"
+        />
 
-        {/* Amenities */}
         <input
           name="amenities"
           value={form.amenities}
@@ -157,7 +130,6 @@ export default function CreateRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        {/* Capacity */}
         <h4 className="font-medium mt-2">Capacity</h4>
 
         <div className="grid grid-cols-3 gap-3">

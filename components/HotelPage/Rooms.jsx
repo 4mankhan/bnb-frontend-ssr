@@ -24,7 +24,7 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
             Select Available Rooms
           </h2>
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1">
-            Choose a luxury room type that fits your party's details.
+            Choose a luxury room type that fits your party&apos;s details.
           </p>
         </div>
 
@@ -45,7 +45,7 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
                 onClick={() => setSelectedRoom(room)}
               >
                 {/* IMAGES COLUMN */}
-                <div className="relative rounded-xl overflow-hidden min-h-[220px] md:min-h-auto bg-gray-50 dark:bg-gray-850">
+                <div className="relative rounded-xl overflow-hidden min-h-55 md:min-h-auto bg-gray-50 dark:bg-gray-850">
                   <div className="grid grid-cols-2 gap-2 h-full w-full">
                     <div className="relative h-full w-full overflow-hidden">
                       <Image

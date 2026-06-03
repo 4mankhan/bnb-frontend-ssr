@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { useLazyGetProfileQuery } from "@/lib/api";
 
 function getAccessToken() {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
+  return (
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    ""
+  );
 }
 
 export default function OwnerLayout({ children }) {
@@ -17,6 +19,7 @@ export default function OwnerLayout({ children }) {
   const pathname = usePathname();
   const [status, setStatus] = useState("checking");
   const [error, setError] = useState("");
+  const [fetchProfile] = useLazyGetProfileQuery();
 
   useEffect(() => {
     const token = getAccessToken();
@@ -30,18 +33,7 @@ export default function OwnerLayout({ children }) {
         setStatus("checking");
         setError("");
 
-        const res = await fetch(`${API_BASE_URL}/auth/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to verify profile");
-        }
-
-        const data = await res.json();
-        const user = data?.data || data?.user || data;
+        const user = await fetchProfile().unwrap();
 
         if (!user) {
           router.replace("/login");
@@ -55,13 +47,13 @@ export default function OwnerLayout({ children }) {
 
         setStatus("allowed");
       } catch (err) {
-        setError(err.message || "Could not verify your account.");
+        setError(err?.data?.message || "Could not verify your account.");
         setStatus("error");
       }
     };
 
     verifyOwner();
-  }, [pathname, router]);
+  }, [pathname, router, fetchProfile]);
 
   if (status === "checking") {
     return (
@@ -95,15 +87,12 @@ export default function OwnerLayout({ children }) {
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-2 items-center justify-between">
           <h1 className="font-semibold">Owner Panel</h1>
           <nav className="flex flex-wrap items-center gap-2 text-sm">
-            <Link className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800" href="/account">
+            <Link
+              className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800"
+              href="/account"
+            >
               Profile
             </Link>
-            {/* <Link className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800" href="/owner/hotels">
-              My Hotels
-            </Link>
-            <Link className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800" href="/owner/hotels/new">
-              Add Hotel
-            </Link> */}
           </nav>
         </div>
       </header>

@@ -1,50 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "../../utils/authContext.js";
+import { useLoginMutation, useSignupMutation } from "@/lib/api";
 import background from "@/public/images/bg.jpg";
 
 export default function AuthForm({ type = "login" }) {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-
   const router = useRouter();
   const { login } = useAuth();
+
+  const [loginUser, { isLoading: isLoginLoading }] = useLoginMutation();
+  const [signupUser, { isLoading: isSignupLoading }] = useSignupMutation();
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role:"",
+    role: "",
   });
 
-  const [loading, setLoading] = useState(false);
-
   const isRegister = type === "register";
+  const loading = isRegister ? isSignupLoading : isLoginLoading;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
-
     try {
-      const url = isRegister ? `${api}/auth/signup` : `${api}/auth/login`;
-
       const payload = isRegister
         ? form
         : { email: form.email, password: form.password };
 
-      const res = await axios.post(url, payload);
-      const user =
-        res.data?.user || res.data?.data?.user || res.data?.data || null;
-      const accessToken =
-        res.data?.accessToken || res.data?.data?.accessToken || "";
-      const refreshToken =
-        res.data?.refreshToken || res.data?.data?.refreshToken || "";
+      const authMutation = isRegister ? signupUser : loginUser;
+      const { user, accessToken, refreshToken } = await authMutation(
+        payload,
+      ).unwrap();
 
       login({
         user,
@@ -59,16 +52,12 @@ export default function AuthForm({ type = "login" }) {
       }
     } catch (err) {
       console.log("FULL ERROR:", err);
-      console.log("SERVER ERROR:", err.response?.data);
-      alert(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
+      alert(err?.data?.message || "Login failed");
     }
   };
 
   return (
     <main className="relative min-h-screen bg-rose-950 flex items-center justify-center px-4 overflow-hidden">
-      {/* Background Image */}
       <Image
         src={background}
         alt="bg"
@@ -77,10 +66,8 @@ export default function AuthForm({ type = "login" }) {
         className="object-cover opacity-60"
       />
 
-      {/* Dark Overlay */}
       <div className="absolute inset-0 " />
 
-      {/* Form Card */}
       <div className="relative z-10 bg-white backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-md text-center">
         <h2 className="text-3xl font-serif text-rose-500 mb-6">
           {isRegister ? "Create Account" : "Welcome Back"}
@@ -136,7 +123,6 @@ export default function AuthForm({ type = "login" }) {
           </button>
         </div>
 
-        {/* Switch */}
         <p className="text-center text-sm mt-6 text-gray-700">
           {isRegister ? "Already have an account?" : "New here?"}
           <span

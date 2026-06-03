@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import background from "../../public/images/bg.jpg";
 import { useAuth } from "../../utils/authContext.js";
 import { Pencil, Check, X } from "lucide-react";
+import { useUpdateProfileMutation } from "@/lib/api";
 
 export default function AccountPage() {
   const router = useRouter();
   const { user, setUser, logout, loading } = useAuth();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,53 +39,33 @@ export default function AccountPage() {
     });
   };
 
-  const api = process.env.NEXT_PUBLIC_API_URL;
   const handleUpdate = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-
-      const res = await fetch(`${api}/auth/update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await updateProfile(formData).unwrap();
       setUser(data);
-
-      // Update localStorage with fresh user
       localStorage.setItem("user", JSON.stringify(data));
-
-      // Update UI instantly (no reload)
       setFormData({
         name: data.name,
         email: data.email,
         password: "",
       });
-
       setIsEditing(false);
     } catch (err) {
-      alert(err.message);
+      alert(err?.data?.error || err?.data?.message || "Update failed");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) return null;
+  const startEditing = () => {
+    setFormData({
+      name: user.name,
+      email: user.email,
+      password: "",
+    });
+    setIsEditing(true);
+  };
 
   return (
     <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-200">
-      {/* Background */}
       <Image
         src={background}
         alt="background"
@@ -92,22 +74,19 @@ export default function AccountPage() {
         className="object-cover opacity-40 dark:opacity-20"
       />
 
-      {/* Overlay */}
       <div className="absolute inset-0 bg-white/40 dark:bg-black/60 backdrop-blur-sm z-10" />
 
-      {/* Card */}
       <div className="relative z-20 w-full max-w-md rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl transition-colors">
-        {/* Top Actions */}
         <div className="flex justify-end">
           {!isEditing ? (
             <Pencil
               className="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-              onClick={() => setIsEditing(true)}
+              onClick={startEditing}
             />
           ) : (
             <div className="flex gap-3">
               <Check
-                className="cursor-pointer text-green-500 hover:scale-110 transition"
+                className={`cursor-pointer text-green-500 hover:scale-110 transition ${isUpdating ? "opacity-50 pointer-events-none" : ""}`}
                 onClick={handleUpdate}
               />
               <X
@@ -125,16 +104,12 @@ export default function AccountPage() {
           )}
         </div>
 
-        {/* Profile Header */}
         <div className="flex items-start gap-6 mt-2">
-          {/* Avatar */}
           <div className="w-20 h-20 rounded-full bg-rose-500 text-white flex items-center justify-center text-2xl font-bold shadow-md shrink-0">
             {user.name?.charAt(0).toUpperCase()}
           </div>
 
-          {/* Name + Email + Role */}
           <div className="flex-1">
-            {/* NAME */}
             {isEditing ? (
               <input
                 name="name"
@@ -149,7 +124,6 @@ export default function AccountPage() {
               </h2>
             )}
 
-            {/* EMAIL */}
             {isEditing ? (
               <input
                 name="email"
@@ -164,12 +138,10 @@ export default function AccountPage() {
               </p>
             )}
 
-            {/* ROLE */}
             <div className="mt-4 flex items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 Role
               </span>
-
               <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
                 {user.role}
               </span>
@@ -177,10 +149,8 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="my-6 border-t border-gray-200 dark:border-gray-700" />
 
-        {/* Logout */}
         {!isEditing && (
           <button
             onClick={handleLogout}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { useProcessPaymentMutation } from "@/lib/api";
 import { Lock, CheckCircle2, X, AlertCircle } from "lucide-react";
 
 export default function PaymentModal({
@@ -11,10 +11,9 @@ export default function PaymentModal({
   booking,
   onSuccess,
 }) {
-  const api = process.env.NEXT_PUBLIC_API_URL;
+  const [processPayment, { isLoading: loading }] = useProcessPaymentMutation();
 
   const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [shake, setShake] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -23,15 +22,14 @@ export default function PaymentModal({
 
   // Focus invisible input for easy typing
   useEffect(() => {
-    if (isOpen && pinInputRef.current) {
-      setTimeout(() => pinInputRef.current.focus(), 150);
-    }
-    if (!isOpen) {
-      setPin("");
-      setIsSuccess(false);
-      setErrorMsg("");
-    }
-  }, [isOpen]);
+  if (!isOpen) return;
+
+  const timer = setTimeout(() => {
+    pinInputRef.current?.focus();
+  }, 150);
+
+  return () => clearTimeout(timer);
+}, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -63,37 +61,22 @@ export default function PaymentModal({
       return;
     }
 
-    setLoading(true);
-    const token = localStorage.getItem("token");
-
     try {
-      await axios.post(
-        `${api}/payment/process`,
-        {
-          bookingId: booking._id,
-          success: true,
-          method: "mock",
-          pin: activePin,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await processPayment({
+        bookingId: booking._id,
+        success: true,
+        method: "mock",
+        pin: activePin,
+      }).unwrap();
 
-      // Trigger gorgeous success state
       setIsSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 2000);
-
+     setTimeout(() => {
+  onSuccess();
+  handleClose();
+}, 2000);
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Payment process failed");
-    } finally {
-      setLoading(false);
+      toast.error(err?.data?.message || "Payment process failed");
     }
   };
 
@@ -108,8 +91,21 @@ export default function PaymentModal({
     }
   };
 
+
+  const resetModal = () => {
+  setPin("");
+  setErrorMsg("");
+  setIsSuccess(false);
+};
+
+const handleClose = () => {
+  resetModal();
+  onClose();
+};
+
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 transition-all duration-300">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md px-4 transition-all duration-300">
       
       {/* Invisible actual input to capture native focus and keyboard events */}
       <input
@@ -165,7 +161,7 @@ export default function PaymentModal({
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={loading}
                 className="h-7 w-7 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850 flex items-center justify-center text-gray-400 hover:text-rose-500 active:scale-90 transition-all cursor-pointer"
               >
@@ -245,7 +241,7 @@ export default function PaymentModal({
             </div>
 
             {/* PREMIUM NUMERICAL KEYPAD */}
-            <div className="grid grid-cols-3 gap-2.5 max-w-[260px] mx-auto pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="grid grid-cols-3 gap-2.5 max-w-65 mx-auto pt-2 border-t border-gray-100 dark:border-gray-800">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
