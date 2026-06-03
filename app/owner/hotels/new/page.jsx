@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCreateOwnerHotelMutation } from "@/lib/api";
+import uploadToCloudinary from "@/utils/uploadToCloudinary";
 
 const initialForm = {
   name: "",
@@ -20,6 +21,8 @@ const initialForm = {
 export default function CreateHotelPage() {
   const router = useRouter();
   const [form, setForm] = useState(initialForm);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [createOwnerHotel, { isLoading: submitting }] =
     useCreateOwnerHotelMutation();
@@ -47,22 +50,33 @@ export default function CreateHotelPage() {
     try {
       setError("");
 
+      setUploading(true);
+
+      let photoUrl = "";
+
+      // 1. upload image first
+      if (imageFile) {
+        photoUrl = await uploadToCloudinary(imageFile);
+      }
+
+      // 2. build payload
       const payload = {
         ...form,
-        photos: form.photos
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean),
+        photos: photoUrl ? [photoUrl] : [],
         amenities: form.amenities
           .split(",")
           .map((a) => a.trim())
           .filter(Boolean),
       };
 
+      // 3. send to backend
       await createOwnerHotel(payload).unwrap();
+
       router.push("/owner/hotels");
     } catch (err) {
       setError(err?.data?.message || "Failed to create hotel.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -98,10 +112,9 @@ export default function CreateHotelPage() {
         />
 
         <input
-          name="photos"
-          value={form.photos}
-          onChange={handleChange}
-          placeholder="Photo URLs (comma separated)"
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files[0])}
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 

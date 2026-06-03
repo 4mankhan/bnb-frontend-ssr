@@ -1,8 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreateOwnerRoomMutation } from "@/lib/api";
+import uploadToCloudinary from "@/utils/uploadToCloudinary";
 
 const initialForm = {
   type: "",
@@ -18,6 +19,10 @@ const initialForm = {
 };
 
 export default function CreateRoomPage() {
+  const [images, setImages] = useState([]);
+
+  const [uploading, setUploading] = useState(false);
+
   const router = useRouter();
   const params = useParams();
   const hotelId = params?.hotelId;
@@ -43,34 +48,69 @@ export default function CreateRoomPage() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      hotelId,
-      ...form,
-      basePrice: Number(form.basePrice),
-      totalCount: Number(form.totalCount),
-      amenities: form.amenities
-        .split(",")
-        .map((a) => a.trim())
-        .filter(Boolean),
-      photos: form.photos
-        .split(",")
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .slice(0, 2),
-    };
-
     try {
       setError("");
+     
+      //  validation: must be exactly 2 images
+      if (images.length !== 2) {
+        setError("Please upload exactly 2 images.");
+        return;
+      }
+      
+       setUploading(true);
+
+      // 1. upload both images to cloudinary
+      const uploadedUrls = await Promise.all(
+        images.map((image) => uploadToCloudinary(image.file)),
+      );
+
+      // 2. build payload
+      const payload = {
+        hotelId,
+        ...form,
+        basePrice: Number(form.basePrice),
+        totalCount: Number(form.totalCount),
+
+        amenities: form.amenities
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
+
+        photos: uploadedUrls, //  exactly 2 URLs
+      };
+
+      // 3. send to backend
       await createOwnerRoom(payload).unwrap();
+
       router.push(`/owner/hotels/${hotelId}`);
     } catch (err) {
-      setError(err?.data?.message || "Could not create room.");
+      console.error("CREATE ROOM ERROR:", err);
+
+      setError(
+        err?.data?.message ||
+          err?.message ||
+          JSON.stringify(err) ||
+          "Could not create room.",
+      );
+    } finally {
+      setUploading(false);
     }
   };
+
+  useEffect(() => {
+  const previews = images.map((img) => img.preview);
+
+  return () => {
+    previews.forEach((preview) => {
+      URL.revokeObjectURL(preview);
+    });
+  };
+}, [images]);
+
+
 
   return (
     <section className="space-y-4">
@@ -114,11 +154,58 @@ export default function CreateRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((image, index) => (
+            <div key={`${image.file.name}-${index}`} className="relative">
+              <img
+                src={image.preview}
+                alt={`Room Preview ${index + 1}`}
+                className="h-40 md:h-100 w-full rounded-xl border object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  URL.revokeObjectURL(image.preview);
+
+                  setImages((prev) => prev.filter((_, i) => i !== index));
+                }}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-gray-900/25 text-white flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
         <input
-          name="photos"
-          value={form.photos}
-          onChange={handleChange}
-          placeholder="Image URLs (comma separated, max 2)"
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+
+            if (!file) return;
+
+            setImages((prev) => {
+              const updated = [
+                ...prev,
+                {
+                  file,
+                  preview: URL.createObjectURL(file),
+                },
+              ];
+
+              if (updated.length > 2) {
+                URL.revokeObjectURL(updated[0].preview);
+                updated.shift();
+              }
+
+              return updated;
+            });
+
+            // allows selecting same file again
+            e.target.value = "";
+          }}
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
@@ -172,10 +259,10 @@ export default function CreateRoomPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || uploading}
           className="rounded-full bg-rose-500 px-5 py-2.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50"
         >
-          {submitting ? "Creating..." : "Create Room"}
+          {submitting || uploading ? "Creating..." : "Create Room"}
         </button>
       </form>
     </section>

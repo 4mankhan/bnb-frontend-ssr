@@ -11,6 +11,7 @@ import {
   useDeleteOwnerHotelMutation,
   useDeleteOwnerRoomMutation,
 } from "@/lib/api";
+import uploadToCloudinary from "@/utils/uploadToCloudinary";
 
 export default function OwnerHotelDetailsPage() {
   const params = useParams();
@@ -30,6 +31,8 @@ export default function OwnerHotelDetailsPage() {
       phoneNumber: "",
     },
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const {
     data: hotel,
@@ -50,25 +53,26 @@ export default function OwnerHotelDetailsPage() {
   const [deleteOwnerRoom, { isLoading: isDeletingRoom }] =
     useDeleteOwnerRoomMutation();
 
-  const saving = isUpdating || isActivating || isDeletingHotel || isDeletingRoom;
+  const saving =
+    isUpdating || isActivating || isDeletingHotel || isDeletingRoom;
   const loading = isHotelLoading || isRoomsLoading;
 
   useEffect(() => {
     if (!hotel) return;
 
     setForm({
-      name: hotel?.name || "",
-      city: hotel?.city || "",
-      photos: (hotel?.photos || []).join(", "),
-      amenities: (hotel?.amenities || [])
+      name: hotel.name || "",
+      city: hotel.city || "",
+      photos: (hotel.photos || []).join(", "),
+      amenities: (hotel.amenities || [])
         .flatMap((a) => a.split(","))
         .map((a) => a.trim())
         .join(", "),
       contactInfo: {
-        completeAddress: hotel?.contactInfo?.completeAddress || "",
-        location: hotel?.contactInfo?.location || "",
-        email: hotel?.contactInfo?.email || "",
-        phoneNumber: hotel?.contactInfo?.phoneNumber || "",
+        completeAddress: hotel.contactInfo?.completeAddress || "",
+        location: hotel.contactInfo?.location || "",
+        email: hotel.contactInfo?.email || "",
+        phoneNumber: hotel.contactInfo?.phoneNumber || "",
       },
     });
   }, [hotel]);
@@ -76,15 +80,22 @@ export default function OwnerHotelDetailsPage() {
   const updateHotel = async (event) => {
     event.preventDefault();
 
+    let photoUrl = hotel?.photos?.[0] || "";
+
+    if (imageFile) {
+      setUploadingImage(true);
+
+      photoUrl = await uploadToCloudinary(imageFile);
+
+      setUploadingImage(false);
+    }
+
     try {
       setError("");
       const payload = {
         hotelId,
         ...form,
-        photos: form.photos
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean),
+        photos: [photoUrl],
         amenities: form.amenities
           .split(",")
           .map((a) => a.trim())
@@ -96,6 +107,10 @@ export default function OwnerHotelDetailsPage() {
       setError(err?.data?.message || "Could not update hotel.");
     }
   };
+
+  const imagePreview = imageFile
+    ? URL.createObjectURL(imageFile)
+    : hotel?.photos?.[0] || "";
 
   const activateHotel = async () => {
     try {
@@ -216,15 +231,25 @@ export default function OwnerHotelDetailsPage() {
             className="w-full rounded-xl border px-3 py-2.5 text-sm"
           />
         </div>
-
         <input
-          value={form.photos}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, photos: e.target.value }))
-          }
-          placeholder="Photo URLs (comma separated)"
+          type="file"
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setImageFile(file);
+          }}
         />
+
+        {imagePreview && (
+          <img
+            src={imagePreview}
+            alt="Hotel preview"
+            className="h-40 md:h-90 w-full object-cover rounded-xl border mt-3"
+          />
+        )}
 
         <input
           value={form.amenities}
@@ -300,10 +325,10 @@ export default function OwnerHotelDetailsPage() {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || uploadingImage}
           className="rounded-full bg-gray-900 dark:bg-gray-100 dark:text-gray-900 px-5 py-2.5 text-sm text-white hover:bg-black dark:hover:bg-white disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving || uploadingImage ? "Saving..." : "Save Changes"}
         </button>
       </form>
 
@@ -316,13 +341,7 @@ export default function OwnerHotelDetailsPage() {
         ) : (
           <div className="space-y-2">
             {rooms.map((room) => {
-              const {
-                _id,
-                type,
-                basePrice,
-                totalCount,
-                capacity = {},
-              } = room;
+              const { _id, type, basePrice, totalCount, capacity = {} } = room;
 
               const { adults = 0, children = 0 } = capacity;
 
