@@ -12,6 +12,7 @@ import {
   useDeleteOwnerRoomMutation,
 } from "@/lib/api";
 import uploadToCloudinary from "@/utils/uploadToCloudinary";
+import Image from "next/image";
 
 export default function OwnerHotelDetailsPage() {
   const params = useParams();
@@ -31,7 +32,7 @@ export default function OwnerHotelDetailsPage() {
       phoneNumber: "",
     },
   });
-  const [imageFile, setImageFile] = useState(null);
+  const [image, setImage] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const {
@@ -63,7 +64,7 @@ export default function OwnerHotelDetailsPage() {
     setForm({
       name: hotel.name || "",
       city: hotel.city || "",
-      photos: (hotel.photos || []).join(", "),
+      photos: hotel.photos || [],
       amenities: (hotel.amenities || [])
         .flatMap((a) => a.split(","))
         .map((a) => a.trim())
@@ -79,15 +80,11 @@ export default function OwnerHotelDetailsPage() {
 
   const updateHotel = async (event) => {
     event.preventDefault();
+    setUploadingImage(true);
+    let photoUrl = "";
 
-    let photoUrl = hotel?.photos?.[0] || "";
-
-    if (imageFile) {
-      setUploadingImage(true);
-
-      photoUrl = await uploadToCloudinary(imageFile);
-
-      setUploadingImage(false);
+    if (image?.file) {
+      photoUrl = await uploadToCloudinary(image.file);
     }
 
     try {
@@ -95,7 +92,7 @@ export default function OwnerHotelDetailsPage() {
       const payload = {
         hotelId,
         ...form,
-        photos: [photoUrl],
+         photos: photoUrl ? [photoUrl] : [],
         amenities: form.amenities
           .split(",")
           .map((a) => a.trim())
@@ -105,12 +102,10 @@ export default function OwnerHotelDetailsPage() {
       await updateOwnerHotel(payload).unwrap();
     } catch (err) {
       setError(err?.data?.message || "Could not update hotel.");
+    } finally {
+      setUploadingImage(false);
     }
   };
-
-  const imagePreview = imageFile
-    ? URL.createObjectURL(imageFile)
-    : hotel?.photos?.[0] || "";
 
   const activateHotel = async () => {
     try {
@@ -239,24 +234,65 @@ export default function OwnerHotelDetailsPage() {
             const file = e.target.files?.[0];
             if (!file) return;
 
-            setImageFile(file);
+            setImage(file);
           }}
         />
 
-        {imagePreview && (
+       <div className="grid grid-cols-1 gap-3">
+  {(image || form.photos?.length) && (
+    <div className="relative">
+      <div className="relative h-40 md:h-80 w-full">
+
+        {/* NEW IMAGE (preview upload from blob) */}
+        {image?.isNew ? (
           <img
-            src={imagePreview}
+            src={image.preview}
             alt="Hotel preview"
-            className="h-40 md:h-90 w-full object-cover rounded-xl border mt-3"
+            className="rounded-xl border object-cover w-full h-full"
+          />
+        ) : (
+          /* EXISTING IMAGE (from backend) */
+          <Image
+            src={image?.url || form.photos?.[0]}
+            alt="Hotel"
+            fill
+            className="rounded-xl border object-cover"
           />
         )}
 
+      </div>
+
+      {/* REMOVE BUTTON */}
+      <button
+        type="button"
+        onClick={() => setImage(null)}
+        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+      >
+        ✕
+      </button>
+    </div>
+  )}
+</div>
+
         <input
-          value={form.amenities}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, amenities: e.target.value }))
-          }
-          placeholder="Amenities (wifi, pool, parking...)"
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const newImage = {
+              id: crypto.randomUUID(),
+              file,
+              preview: URL.createObjectURL(file),
+              url: "",
+              isNew: true,
+            };
+
+            setImage(newImage);
+
+            e.target.value = "";
+          }}
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 

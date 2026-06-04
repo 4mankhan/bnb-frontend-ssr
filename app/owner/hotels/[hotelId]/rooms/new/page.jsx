@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCreateOwnerRoomMutation } from "@/lib/api";
 import uploadToCloudinary from "@/utils/uploadToCloudinary";
+import Image from "next/image";
 
 const initialForm = {
   type: "",
@@ -20,7 +21,6 @@ const initialForm = {
 
 export default function CreateRoomPage() {
   const [images, setImages] = useState([]);
-
   const [uploading, setUploading] = useState(false);
 
   const router = useRouter();
@@ -154,58 +154,70 @@ export default function CreateRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          {images.map((image, index) => (
-            <div key={`${image.file.name}-${index}`} className="relative">
-              <img
-                src={image.preview}
-                alt={`Room Preview ${index + 1}`}
-                className="h-40 md:h-100 w-full rounded-xl border object-cover"
-              />
+  <div className="grid grid-cols-2 gap-3">
+  {images.map((image) => (
+    <div key={image.id} className="relative">
+      
+      <div className="relative h-40 md:h-80 w-full">
+        {image.isNew ? (
+          <img
+            src={image.preview}
+            alt="Room"
+            className="rounded-xl border object-cover w-full h-full"
+          />
+        ) : (
+          <Image
+            src={image.url}
+            alt="Room"
+            fill
+            className="rounded-xl border object-cover"
+          />
+        )}
+      </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  URL.revokeObjectURL(image.preview);
-
-                  setImages((prev) => prev.filter((_, i) => i !== index));
-                }}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-gray-900/25 text-white flex items-center justify-center"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
+      <button
+        type="button"
+        onClick={() =>
+          setImages((prev) =>
+            prev.filter((img) => img.id !== image.id)
+          )
+        }
+        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+</div>
 
         <input
           type="file"
           accept="image/*"
           onChange={(e) => {
-            const file = e.target.files?.[0];
+              const files = e.target.files;
 
-            if (!file) return;
+              if (!files) return;
 
-            setImages((prev) => {
-              const updated = [
-                ...prev,
-                {
-                  file,
-                  preview: URL.createObjectURL(file),
-                },
-              ];
+              const newImages = Array.from(files).map((file) => ({
+                id: crypto.randomUUID(), // better than 1,2,3
+                file,
+                preview: URL.createObjectURL(file),
+                url: "", // empty for now (will be filled after upload)
+                isNew: true,
+              }));
 
-              if (updated.length > 2) {
-                URL.revokeObjectURL(updated[0].preview);
-                updated.shift();
-              }
+              setImages((prev) => {
+                const updated = [...prev, ...newImages];
 
-              return updated;
-            });
+                if (updated.length > 2) {
+                  updated.splice(0, updated.length - 2);
+                }
 
-            // allows selecting same file again
-            e.target.value = "";
-          }}
+                return updated;
+              });
+
+              e.target.value = "";
+            }}
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 

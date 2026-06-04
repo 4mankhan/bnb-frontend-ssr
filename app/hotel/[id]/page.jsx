@@ -229,13 +229,9 @@ export default function HotelPage() {
 
             <hr className="border-gray-100 dark:border-gray-800" />
 
-            <Rooms
-              rooms={rooms}
-              roomAvailability={roomAvailability}
-              selectedRoom={selectedRoom}
-              setSelectedRoom={setSelectedRoom}
-            />
+          
           </div>
+          
 
           <div className="hidden lg:block lg:col-span-1">
             {!selectedRoom ? (
@@ -271,8 +267,16 @@ export default function HotelPage() {
               />
             )}
           </div>
+
         </div>
       </div>
+
+        <Rooms
+              rooms={rooms}
+              roomAvailability={roomAvailability}
+              selectedRoom={selectedRoom}
+              setSelectedRoom={setSelectedRoom}
+            />
 
       {selectedRoom && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 px-6 py-4.5 flex items-center justify-between shadow-xl lg:hidden">

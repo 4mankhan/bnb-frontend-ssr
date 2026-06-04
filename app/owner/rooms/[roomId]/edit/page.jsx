@@ -18,6 +18,7 @@ const initialForm = {
     infants: 0,
   },
 };
+import Image from "next/image";
 
 export default function EditRoomPage() {
   const params = useParams();
@@ -220,49 +221,65 @@ export default function EditRoomPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          {images.map((image, index) => (
-            <div key={index} className="relative">
-              <img
-                src={image.preview}
-                alt={`Room ${index + 1}`}
-                className="h-40 md:h-80 w-full rounded-xl border object-cover"
-              />
+  <div className="grid grid-cols-2 gap-3">
+  {images.map((image) => (
+    <div key={image.id} className="relative">
+      
+      <div className="relative h-40 md:h-80 w-full">
+        {image.isNew ? (
+          <img
+            src={image.preview}
+            alt="Room"
+            className="rounded-xl border object-cover w-full h-full"
+          />
+        ) : (
+          <Image
+            src={image.url}
+            alt="Room"
+            fill
+            className="rounded-xl border object-cover"
+          />
+        )}
+      </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setImages((prev) => prev.filter((_, i) => i !== index))
-                }
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
+      <button
+        type="button"
+        onClick={() =>
+          setImages((prev) =>
+            prev.filter((img) => img.id !== image.id)
+          )
+        }
+        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+</div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <input
             type="file"
             accept="image/*"
+            multiple
             onChange={(e) => {
-              const file = e.target.files?.[0];
+              const files = e.target.files;
 
-              if (!file) return;
+              if (!files) return;
+
+              const newImages = Array.from(files).map((file) => ({
+                id: crypto.randomUUID(), // better than 1,2,3
+                file,
+                preview: URL.createObjectURL(file),
+                url: "", // empty for now (will be filled after upload)
+                isNew: true,
+              }));
 
               setImages((prev) => {
-                const updated = [
-                  ...prev,
-                  {
-                    file,
-                    preview: URL.createObjectURL(file),
-                    uploaded: false,
-                  },
-                ];
+                const updated = [...prev, ...newImages];
 
                 if (updated.length > 2) {
-                  updated.shift();
+                  updated.splice(0, updated.length - 2);
                 }
 
                 return updated;

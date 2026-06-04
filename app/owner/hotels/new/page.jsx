@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCreateOwnerHotelMutation } from "@/lib/api";
 import uploadToCloudinary from "@/utils/uploadToCloudinary";
+import Image from "next/image";
 
 const initialForm = {
   name: "",
@@ -21,7 +22,7 @@ const initialForm = {
 export default function CreateHotelPage() {
   const router = useRouter();
   const [form, setForm] = useState(initialForm);
-  const [imageFile, setImageFile] = useState(null);
+  const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [createOwnerHotel, { isLoading: submitting }] =
@@ -45,41 +46,43 @@ export default function CreateHotelPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      setError("");
+  try {
+    setError("");
+    setUploading(true);
 
-      setUploading(true);
+    let photoUrl = ""; // declare outside
 
-      let photoUrl = "";
+    if (image?.file) {
+      console.log("before upload");
 
-      // 1. upload image first
-      if (imageFile) {
-        photoUrl = await uploadToCloudinary(imageFile);
-      }
+      photoUrl = await uploadToCloudinary(image.file);
 
-      // 2. build payload
-      const payload = {
-        ...form,
-        photos: photoUrl ? [photoUrl] : [],
-        amenities: form.amenities
-          .split(",")
-          .map((a) => a.trim())
-          .filter(Boolean),
-      };
-
-      // 3. send to backend
-      await createOwnerHotel(payload).unwrap();
-
-      router.push("/owner/hotels");
-    } catch (err) {
-      setError(err?.data?.message || "Failed to create hotel.");
-    } finally {
-      setUploading(false);
+      console.log("after upload");
     }
-  };
 
+    const payload = {
+      ...form,
+      photos: photoUrl ? [photoUrl] : [],
+      amenities: form.amenities
+        .split(",")
+        .map((a) => a.trim())
+        .filter(Boolean),
+    };
+
+    console.log("PAYLOAD:", payload);
+
+    await createOwnerHotel(payload).unwrap();
+
+    router.push("/owner/hotels");
+  } catch (err) {
+    console.log("ERROR:", err);
+    setError(err?.data?.message || "Failed to create hotel.");
+  } finally {
+    setUploading(false);
+  }
+};
   return (
     <section className="space-y-4">
       <div>
@@ -111,10 +114,56 @@ export default function CreateHotelPage() {
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
+        <div className="grid grid-cols-1 gap-3">
+          {image && (
+            <div className="relative">
+              <div className="relative h-40 md:h-80 w-full">
+                {image.isNew ? (
+                  <img
+                    src={image.preview}
+                    alt="Hotel"
+                    className="rounded-xl border object-cover w-full h-full"
+                  />
+                ) : (
+                  <Image
+                    src={image.url}
+                    alt="Hotel"
+                    fill
+                    className="rounded-xl border object-cover"
+                  />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setImage(null)}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => setImageFile(e.target.files[0])}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const newImage = {
+              id: crypto.randomUUID(),
+              file,
+              preview: URL.createObjectURL(file),
+              url: "",
+              isNew: true,
+            };
+
+            setImage(newImage);
+
+            e.target.value = "";
+          }}
           className="w-full rounded-xl border px-3 py-2.5 text-sm"
         />
 
@@ -169,10 +218,10 @@ export default function CreateHotelPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || uploading}
           className="rounded-full bg-rose-500 px-5 py-2.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50"
         >
-          {submitting ? "Creating..." : "Create Hotel"}
+          {submitting || uploading ? "Creating..." : "Create Hotel"}
         </button>
       </form>
     </section>

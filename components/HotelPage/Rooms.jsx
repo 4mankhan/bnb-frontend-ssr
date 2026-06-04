@@ -16,10 +16,10 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
   };
 
   return (
-    <section className="py-8">
+    <section className="pb-8 px-3">
       <div className="max-w-6xl mx-auto">
         {/* Heading */}
-        <div className="flex flex-col mb-10">
+        <div className="flex flex-col mb-10 pl-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Select Available Rooms
           </h2>
@@ -36,46 +36,65 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
             return (
               <div
                 key={room._id}
-                className={`group grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch rounded-2xl p-4.5 border transition-all duration-300 cursor-pointer
-                ${
-                  isSelected
-                    ? "bg-rose-50/70 dark:bg-rose-950/20 border-rose-350 dark:border-rose-800 shadow-md ring-1 ring-rose-200 dark:ring-rose-900/40"
-                    : "bg-white dark:bg-gray-900 border-gray-150 dark:border-gray-800 hover:border-gray-250 dark:hover:border-gray-700 hover:shadow-md"
-                }`}
-                onClick={() => setSelectedRoom(room)}
+                className={`group grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch rounded-2xl p-5 min-h-70 w-full border transition-all duration-300 cursor-pointer
+  ${
+    isSelected
+      ? "bg-rose-50/70 dark:bg-rose-950/20 border-rose-350 dark:border-rose-800 shadow-md ring-1 ring-rose-200 dark:ring-rose-900/40"
+      : "bg-white dark:bg-gray-900 border-gray-150 dark:border-gray-800 hover:border-gray-250 dark:hover:border-gray-700 hover:shadow-md"
+  }`}
+  onClick={() => setSelectedRoom(room)}
               >
-                {/* IMAGES COLUMN */}
-                <div className="relative rounded-xl overflow-hidden min-h-55 md:min-h-auto bg-gray-50 dark:bg-gray-850">
-                  <div className="grid grid-cols-2 gap-2 h-full w-full">
-                    <div className="relative h-full w-full overflow-hidden">
-                      <Image
-                        src={room.photos?.[0] || "/fallback.jpg"}
-                        alt="primary room photo"
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="relative h-full w-full overflow-hidden">
-                      <Image
-                        src={room.photos?.[1] || room.photos?.[0] || "/fallback.jpg"}
-                        alt="secondary room photo"
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                      />
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <div className="absolute top-3 left-3 bg-rose-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md z-10 flex items-center gap-1">
-                      <ShieldCheck size={12} strokeWidth={2.5} />
-                      Your Selection
-                    </div>
-                  )}
-                </div>
+                <div className="md:col-span-2 relative rounded-xl overflow-hidden">
 
+  {/* MOBILE: vertical stack */}
+  <div className="flex flex-col gap-2 md:hidden h-full">
+    
+    <div className="relative w-full h-48 rounded-xl overflow-hidden">
+      <Image
+        src={room.photos?.[0]?.url || "/fallback.jpg"}
+        alt="room 1"
+        fill
+        className="object-cover"
+      />
+    </div>
+
+    <div className="relative w-full h-48 rounded-xl overflow-hidden">
+      <Image
+        src={room.photos?.[1]?.url || room.photos?.[0]?.url || "/fallback.jpg"}
+        alt="room 2"
+        fill
+        className="object-cover"
+      />
+    </div>
+
+  </div>
+
+  {/* DESKTOP: side-by-side */}
+  <div className="hidden md:grid grid-cols-2 gap-1 h-70 w-full">
+    
+    <div className="relative w-full h-full">
+      <Image
+        src={room.photos?.[0]?.url || "/fallback.jpg"}
+        alt="room 1"
+        fill
+        className="object-cover"
+      />
+    </div>
+
+    <div className="relative w-full h-full">
+      <Image
+        src={room.photos?.[1]?.url || room.photos?.[0]?.url || "/fallback.jpg"}
+        alt="room 2"
+        fill
+        className="object-cover"
+      />
+    </div>
+
+  </div>
+
+</div>
                 {/* INFO COLUMN */}
-                <div className="flex flex-col justify-between p-2 space-y-4">
+                <div className="md:col-span-1 flex flex-col justify-between p-2 space-y-4">
                   <div className="space-y-3">
                     {/* Title */}
                     <div className="flex items-start justify-between gap-2">

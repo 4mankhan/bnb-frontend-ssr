@@ -6,8 +6,6 @@ const uploadToCloudinary = async (file) => {
 
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
-
-  // folder name
   formData.append("folder", "amanbnb");
 
   const res = await fetch(
@@ -19,5 +17,18 @@ const uploadToCloudinary = async (file) => {
   );
 
   const data = await res.json();
-  return data.secure_url;
+
+  if (!res.ok) {
+    throw new Error(data.error?.message || "Upload failed");
+  }
+
+  return {
+    url: data.secure_url,
+    public_id: data.public_id,
+    width: data.width,
+    height: data.height,
+    format: data.format,
+  };
 };
+
+export default uploadToCloudinary;
