@@ -92,7 +92,7 @@ export default function OwnerHotelDetailsPage() {
       const payload = {
         hotelId,
         ...form,
-         photos: photoUrl ? [photoUrl] : [],
+        photos: photoUrl ? [photoUrl] : [],
         amenities: form.amenities
           .split(",")
           .map((a) => a.trim())
@@ -238,41 +238,39 @@ export default function OwnerHotelDetailsPage() {
           }}
         />
 
-       <div className="grid grid-cols-1 gap-3">
-  {(image || form.photos?.length) && (
-    <div className="relative">
-      <div className="relative h-40 md:h-80 w-full">
+        <div className="grid grid-cols-1 gap-3">
+          {(image || form.photos?.length) && (
+            <div className="relative">
+              <div className="relative h-40 md:h-80 w-full">
+                {/* NEW IMAGE (preview upload from blob) */}
+                {image?.isNew ? (
+                  <img
+                    src={image.preview}
+                    alt="Hotel preview"
+                    className="rounded-xl border object-cover w-full h-full"
+                  />
+                ) : (
+                  /* EXISTING IMAGE (from backend) */
+                  <Image
+                    src={image?.url || form.photos?.[0]}
+                    alt="Hotel"
+                    fill
+                    className="rounded-xl border object-cover"
+                  />
+                )}
+              </div>
 
-        {/* NEW IMAGE (preview upload from blob) */}
-        {image?.isNew ? (
-          <img
-            src={image.preview}
-            alt="Hotel preview"
-            className="rounded-xl border object-cover w-full h-full"
-          />
-        ) : (
-          /* EXISTING IMAGE (from backend) */
-          <Image
-            src={image?.url || form.photos?.[0]}
-            alt="Hotel"
-            fill
-            className="rounded-xl border object-cover"
-          />
-        )}
-
-      </div>
-
-      {/* REMOVE BUTTON */}
-      <button
-        type="button"
-        onClick={() => setImage(null)}
-        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
-      >
-        ✕
-      </button>
-    </div>
-  )}
-</div>
+              {/* REMOVE BUTTON */}
+              <button
+                type="button"
+                onClick={() => setImage(null)}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 text-white"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
 
         <input
           type="file"
@@ -410,6 +408,13 @@ export default function OwnerHotelDetailsPage() {
                     >
                       Delete
                     </button>
+
+                    <Link
+                      href={`hotel/${hotelId}`}
+                      className="rounded-full border border-green-600 text-green-600 dark:border-green-600 px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      View Room
+                    </Link>
                   </div>
                 </div>
               );
