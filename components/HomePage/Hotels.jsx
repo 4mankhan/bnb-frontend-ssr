@@ -44,7 +44,7 @@ function HotelCard({ hotel }) {
   return (
     <div
       onClick={() => router.push(`/hotel/${hotel._id}`)}
-      className="group cursor-pointer flex flex-col bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/60 rounded-2xl p-3 shadow-xs hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700/80 transition-all duration-300 hover:-translate-y-1"
+      className="group cursor-pointer flex flex-col bg-linear-to-t from-gray-300 via-gray-200 to-gray-100 dark:bg-linear-to-t dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 border-b border-gray-400 dark:border-gray-800/60 rounded-2xl p-3 shadow-xs hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700/80 transition-all duration-300 hover:-translate-y-1"
     >
       {/* Photo Container */}
       <div className="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-850 shrink-0">
@@ -89,34 +89,49 @@ function HotelCard({ hotel }) {
             {hotel.name}
           </h3>
           <div className="flex items-center gap-1 shrink-0 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md border border-gray-100 dark:border-gray-700">
-            <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" strokeWidth={0} />
-            <span className="text-xs font-bold text-gray-850 dark:text-gray-200 tabular-nums">{rating}</span>
+            <Star
+              className="h-3.5 w-3.5 text-amber-500 fill-amber-500"
+              strokeWidth={0}
+            />
+            <span className="text-xs font-bold text-gray-850 dark:text-gray-200 tabular-nums">
+              {rating}
+            </span>
           </div>
         </div>
 
         {/* Location & Details */}
         <div className="flex flex-col gap-1 mt-2 flex-1 justify-between">
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1">
-              <MapPin size={12} className="text-gray-400 shrink-0" />
-              <span>{hotel.city}</span>
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold flex items-center gap-1">
+              <MapPin
+                size={12}
+                className="text-gray-500 dark:text-gray-400 shrink-0"
+              />
+              <span className="text-gray-700 dark:text-gray-300">
+                {hotel.city}
+              </span>
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate">
-              {hotel.contactInfo?.completeAddress || hotel.contactInfo?.location || "Prime location stay"}
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
+              {hotel.contactInfo?.completeAddress ||
+                hotel.contactInfo?.location ||
+                "Prime location stay"}
             </p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-550 font-semibold">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold">
               {reviewsCount} reviews
             </p>
           </div>
 
           {/* Pricing Row */}
           <div className="pt-3.5 mt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold">
+            <p className="text-xs text-gray-700 dark:text-gray-500 font-semibold">
               Starting from
             </p>
             <p className="text-sm text-gray-950 dark:text-white font-black">
               ₹{price.toLocaleString("en-IN")}
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400"> / night</span>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-400">
+                {" "}
+                / night
+              </span>
             </p>
           </div>
         </div>

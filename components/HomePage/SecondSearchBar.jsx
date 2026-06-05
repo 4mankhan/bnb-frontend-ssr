@@ -85,7 +85,7 @@ export default function SecondSearchBar() {
             placeholder="Search destinations"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full text-xs font-semibold bg-transparent outline-none mt-0.5 text-gray-800 dark:text-gray-100 placeholder-gray-100"
+            className="w-full text-xs placeholder:text-gray-400 font-semibold bg-transparent outline-none mt-0.5 text-gray-700 dark:text-gray-100"
           />
         </div>
 

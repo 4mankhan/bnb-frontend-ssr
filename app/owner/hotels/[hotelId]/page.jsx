@@ -410,7 +410,7 @@ export default function OwnerHotelDetailsPage() {
                     </button>
 
                     <Link
-                      href={`hotel/${hotelId}`}
+                      href={`/hotel/${hotelId}`}
                       className="rounded-full border border-green-600 text-green-600 dark:border-green-600 px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       View Room

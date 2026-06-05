@@ -106,7 +106,7 @@ export default function HomeContent() {
                 className="text-2xl font-black text-rose-500 tracking-tight cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => router.push("/")}
               >
-                amanbnb
+                aman inns
               </h1>
             </div>
 
