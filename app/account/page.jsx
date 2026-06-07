@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import background from "../../public/images/bg.jpg";
 import { useAuth } from "../../utils/authContext.js";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, LogOut, ArrowLeft, Mail, User, Lock, Shield, Home, AlertCircle } from "lucide-react";
 import { useUpdateProfileMutation } from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -20,7 +21,16 @@ export default function AccountPage() {
     password: "",
   });
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
+          <span className="text-sm font-medium text-gray-550 dark:text-gray-400">Loading your profile...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     router.push("/login");
@@ -29,6 +39,7 @@ export default function AccountPage() {
 
   const handleLogout = () => {
     logout();
+    toast.success("Logged out successfully");
     router.push("/login");
   };
 
@@ -39,19 +50,30 @@ export default function AccountPage() {
     });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (e) => {
+    e.preventDefault();
     try {
-      const data = await updateProfile(formData).unwrap();
+      // Clean empty password so it is not updated unnecessarily
+      const payload = { ...formData };
+      if (!payload.password) {
+        delete payload.password;
+      }
+      
+      const data = await updateProfile(payload).unwrap();
       setUser(data);
       localStorage.setItem("user", JSON.stringify(data));
+      
       setFormData({
         name: data.name,
         email: data.email,
         password: "",
       });
       setIsEditing(false);
+      toast.success("Profile updated successfully!");
     } catch (err) {
-      alert(err?.data?.error || err?.data?.message || "Update failed");
+      console.error(err);
+      const msg = err?.data?.error || err?.data?.message || "Profile update failed";
+      toast.error(msg);
     }
   };
 
@@ -65,99 +87,183 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-200">
+    <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+      {/* Blurred background image */}
       <Image
         src={background}
         alt="background"
         fill
         priority
-        className="object-cover opacity-40 dark:opacity-20"
+        className="object-cover opacity-40 dark:opacity-15 blur-[1px]"
       />
+      <div className="absolute inset-0 bg-white/30 dark:bg-black/50 backdrop-blur-sm z-10" />
 
-      <div className="absolute inset-0 bg-white/40 dark:bg-black/60 backdrop-blur-sm z-10" />
+      {/* Main Container Card */}
+      <div className="relative z-20 w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-250/80 dark:border-gray-800/80 bg-white/95 dark:bg-gray-900/90 backdrop-blur-md transition-all">
+        
+        {/* Navigation & Actions Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              if (user.role === "owner") {
+                router.push("/owner");
+              } else {
+                router.push("/");
+              }
+            }}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-850 dark:text-gray-400 dark:hover:text-gray-200 transition"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>{user.role === "owner" ? "Dashboard" : "Home"}</span>
+          </button>
 
-      <div className="relative z-20 w-full max-w-md rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl transition-colors">
-        <div className="flex justify-end">
-          {!isEditing ? (
-            <Pencil
-              className="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+          {!isEditing && (
+            <button
               onClick={startEditing}
-            />
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-250 dark:border-gray-800 text-xs font-bold text-gray-750 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-850 transition"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit Profile
+            </button>
+          )}
+        </div>
+
+        {/* Profile Details Block */}
+        <div className="flex flex-col items-center text-center mt-2 space-y-4">
+          {/* Avatar circle */}
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-rose-500/20">
+              {user.name?.charAt(0).toUpperCase()}
+            </div>
+            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-gray-900">
+              <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+            </span>
+          </div>
+
+          {!isEditing ? (
+            <div className="space-y-1">
+              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                {user.name}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {user.email}
+              </p>
+            </div>
           ) : (
-            <div className="flex gap-3">
-              <Check
-                className={`cursor-pointer text-green-500 hover:scale-110 transition ${isUpdating ? "opacity-50 pointer-events-none" : ""}`}
-                onClick={handleUpdate}
-              />
-              <X
-                className="cursor-pointer text-red-500 hover:scale-110 transition"
-                onClick={() => {
-                  setIsEditing(false);
-                  setFormData({
-                    name: user.name,
-                    email: user.email,
-                    password: "",
-                  });
-                }}
-              />
+            <div className="w-full text-left">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 text-center">Update Your Profile</h3>
+            </div>
+          )}
+
+          {/* Role badge */}
+          {!isEditing && (
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/35 border border-rose-100 dark:border-rose-900/30 text-xs font-bold text-rose-600 dark:text-rose-400 shadow-sm uppercase tracking-wider">
+              <Shield className="h-3.5 w-3.5" />
+              {user.role}
             </div>
           )}
         </div>
 
-        <div className="flex items-start gap-6 mt-2">
-          <div className="w-20 h-20 rounded-full bg-rose-500 text-white flex items-center justify-center text-2xl font-bold shadow-md shrink-0">
-            {user.name?.charAt(0).toUpperCase()}
-          </div>
+        {/* Divider */}
+        <div className="my-6 border-t border-gray-200 dark:border-gray-800/60" />
 
-          <div className="flex-1">
-            {isEditing ? (
-              <input
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none transition"
-                placeholder="Your name"
-              />
-            ) : (
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {user.name}
-              </h2>
-            )}
-
-            {isEditing ? (
-              <input
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-3 w-full p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none transition"
-                placeholder="Your email"
-              />
-            ) : (
-              <p className="mt-1 text-gray-600 dark:text-gray-400">
-                {user.email}
-              </p>
-            )}
-
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Role
-              </span>
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
-                {user.role}
-              </span>
+        {/* Form Inputs (when editing) */}
+        {isEditing ? (
+          <form onSubmit={handleUpdate} className="space-y-4">
+            {/* Name input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">Full Name</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <User className="h-4 w-4" />
+                </span>
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Your Name"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 dark:focus:border-rose-500/80 transition dark:text-white"
+                />
+              </div>
             </div>
+
+            {/* Email input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">Email Address</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <Mail className="h-4 w-4" />
+                </span>
+                <input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="Your Email"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 dark:focus:border-rose-500/80 transition dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Password input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">New Password (optional)</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <input
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Leave blank to keep same"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 dark:focus:border-rose-500/80 transition dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Actions button block */}
+            <div className="flex gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="flex-1 inline-flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-2.5 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-900 transition active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className="flex-1 inline-flex items-center justify-center rounded-xl bg-rose-500 hover:bg-rose-600 text-white py-2.5 text-sm font-semibold shadow-md shadow-rose-500/10 transition active:scale-95 disabled:opacity-50"
+              >
+                {isUpdating ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-3">
+            {/* Back to Homepage Button */}
+            <button
+              onClick={() => router.push("/")}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-gray-250 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-3 px-4 font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition active:scale-98 cursor-pointer"
+            >
+              <Home className="h-4 w-4" />
+              Go to Homepage
+            </button>
+
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-900 py-3 px-4 font-bold text-sm transition active:scale-98 cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
           </div>
-        </div>
-
-        <div className="my-6 border-t border-gray-200 dark:border-gray-700" />
-
-        {!isEditing && (
-          <button
-            onClick={handleLogout}
-            className="mt-6 w-full py-3 rounded-xl font-medium bg-gray-900 hover:bg-gray-700 text-white dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white transition-colors"
-          >
-            Logout
-          </button>
         )}
       </div>
     </main>

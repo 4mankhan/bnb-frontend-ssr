@@ -44,7 +44,7 @@ function HotelCard({ hotel }) {
   return (
     <div
       onClick={() => router.push(`/hotel/${hotel._id}`)}
-      className="group cursor-pointer flex flex-col bg-linear-to-t from-gray-300 via-gray-200 to-gray-100 dark:bg-linear-to-t dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 border-b border-gray-400 dark:border-gray-800/60 rounded-2xl p-3 shadow-xs hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700/80 transition-all duration-300 hover:-translate-y-1"
+      className="group cursor-pointer flex flex-col bg-white bg-none border border-gray-200/80 dark:bg-linear-to-t dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 dark:border-gray-800/60 rounded-2xl p-3 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700/80 transition-all duration-300 hover:-translate-y-1"
     >
       {/* Photo Container */}
       <div className="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-850 shrink-0">
