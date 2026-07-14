@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import BookingCard from "@/components/HotelPage/BookingCard";
-import PaymentModal from "@/components/HotelPage/PaymentModal";
+import PaymentModal from "@/components/HotelPage/xPaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
 import toast from "react-hot-toast";
 import RoomCardSkeleton from "@/components/RoomCardSkeleton";
@@ -15,7 +15,7 @@ import {
   useGetRoomsByHotelQuery,
   useCreateBookingMutation,
 } from "@/lib/api";
-import { useRoomAvailability } from "@/lib/hooks/useRoomAvailability";
+import { useRoomAvailability } from "@/hooks/useRoomAvailability";
 import Footer from "@/components/Footer";
 
 export default function HotelPage() {
@@ -272,7 +272,7 @@ export default function HotelPage() {
       </div>
 
         <Rooms
-              rooms={rooms}
+              rooms={rooms?.data ?? []}
               roomAvailability={roomAvailability}
               selectedRoom={selectedRoom}
               setSelectedRoom={setSelectedRoom}

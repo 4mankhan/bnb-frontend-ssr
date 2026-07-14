@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../utils/authContext.js";
 import { useLoginMutation, useSignupMutation } from "@/lib/api";
 import background from "@/public/images/bg.jpg";
 import { Mail, Lock, User, UserCheck, ArrowRight, Hotel, ShieldCheck, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/lib/slice/authSlice";
 
 export default function AuthForm({ type = "login" }) {
   const router = useRouter();
-  const { login } = useAuth();
+const dispatch = useDispatch();
 
   const [loginUser, { isLoading: isLoginLoading }] = useLoginMutation();
   const [signupUser, { isLoading: isSignupLoading }] = useSignupMutation();
@@ -37,15 +38,10 @@ export default function AuthForm({ type = "login" }) {
         : { email: form.email, password: form.password };
 
       const authMutation = isRegister ? signupUser : loginUser;
-      const { user, accessToken, refreshToken } = await authMutation(
-        payload,
-      ).unwrap();
-
-      login({
-        user,
-        accessToken,
-        refreshToken,
-      });
+      const response = await authMutation(payload).unwrap();
+      const user = response.data.user;
+      await dispatch(
+        setCredentials({user: response.data})).unwrap();
 
       toast.success(isRegister ? "Account created successfully!" : "Welcome back!");
 
@@ -65,17 +61,17 @@ export default function AuthForm({ type = "login" }) {
     <main className="relative min-h-screen bg-slate-900 dark:bg-slate-950 flex items-center justify-center px-4 overflow-hidden">
       {/* Background Image with Dark Overlay */}
       
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-black/40 to-slate-900/70" />
+      <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-black/40 to-slate-900/70" />
 
       {/* Card Container */}
       <div className="relative z-10 bg-white/95 dark:bg-gray-900/90 backdrop-blur-md shadow-2xl border border-white/20 dark:border-gray-800/80 rounded-3xl p-6 md:p-8 w-full max-w-md text-center transition-all duration-300">
         
         {/* Brand Logo & Name */}
         <div className="flex flex-col items-center gap-1.5 mb-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-tr from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25">
             <Hotel className="h-6 w-6" />
           </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent tracking-tight">
+          <span className="font-bold text-xl bg-linear-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent tracking-tight">
             Aman Inns
           </span>
         </div>
@@ -183,7 +179,7 @@ export default function AuthForm({ type = "login" }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white py-3 px-4 font-bold text-sm hover:from-rose-600 hover:to-pink-600 shadow-md shadow-rose-500/10 hover:shadow-rose-500/20 disabled:opacity-50 transition active:scale-98 cursor-pointer mt-2"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-rose-500 to-pink-500 text-white py-3 px-4 font-bold text-sm hover:from-rose-600 hover:to-pink-600 shadow-md shadow-rose-500/10 hover:shadow-rose-500/20 disabled:opacity-50 transition active:scale-98 cursor-pointer mt-2"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -201,9 +197,9 @@ export default function AuthForm({ type = "login" }) {
 
         {/* Divider */}
         <div className="relative flex py-4 items-center">
-          <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
-          <span className="flex-shrink mx-4 text-[11px] text-gray-400 uppercase font-bold tracking-wider">or continue with</span>
-          <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
+          <div className="grow border-t border-gray-200 dark:border-gray-800"></div>
+          <span className="shrink mx-4 text-[11px] text-gray-400 uppercase font-bold tracking-wider">or continue with</span>
+          <div className="grow border-t border-gray-200 dark:border-gray-800"></div>
         </div>
 
         {/* Social Buttons */}

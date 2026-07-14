@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import background from "../../public/images/bg.jpg";
-import { useAuth } from "../../utils/authContext.js";
+import { useAuth } from "../../utils/useAuth.js";
 import { Pencil, LogOut, ArrowLeft, Mail, User, Lock, Shield, Home, AlertCircle } from "lucide-react";
 import { useUpdateProfileMutation } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -133,7 +133,7 @@ export default function AccountPage() {
         <div className="flex flex-col items-center text-center mt-2 space-y-4">
           {/* Avatar circle */}
           <div className="relative group">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-rose-500/20">
+            <div className="w-20 h-20 rounded-3xl bg-linear-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-rose-500/20">
               {user.name?.charAt(0).toUpperCase()}
             </div>
             <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-gray-900">

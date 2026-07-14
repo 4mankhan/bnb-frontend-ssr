@@ -27,7 +27,7 @@ import SearchBar from "@/components/HomePage/Searchbar";
 import ThemeToggle from "@/utils/Theme/ThemeToggle";
 import { useSearchParams } from "next/navigation";
 import SecondSearchBar from "@/components/HomePage/SecondSearchBar";
-import { useAuth } from "@/utils/authContext";
+import { useAuth } from "@/utils/useAuth";
 import useResponsiveLimit from "@/utils/reposiveRateLimit";
 import HotelCardSkeleton from "@/components/HotelCardSkeleton";
 import Hotels from "./Hotels";

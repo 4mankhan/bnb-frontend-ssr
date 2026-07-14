@@ -172,10 +172,10 @@ const handleClose = () => {
             {/* STAY RECEIPT BRIEF */}
             <div className="rounded-2xl p-4 bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 space-y-3.5 shadow-xs">
               <div className="space-y-1">
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-rose-500">
+                <span className="text-[9px] font-extrabold uppercase text-500 tracking-wider text-rose-500">
                   Stay Summary
                 </span>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                <h3 className="text-sm font-bold text-gray-900 truncate">
                   {booking?.hotel?.name || "Premium Stay Hotel"}
                 </h3>
               </div>
@@ -185,7 +185,7 @@ const handleClose = () => {
                   <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Total Amount Due
                   </p>
-                  <p className="text-lg font-black text-gray-950 dark:text-white mt-0.5">
+                  <p className="text-lg font-black text-gray-950 mt-0.5">
                     ₹{booking?.totalPrice?.toLocaleString("en-IN")}
                   </p>
                 </div>

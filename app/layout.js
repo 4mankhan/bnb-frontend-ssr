@@ -1,15 +1,9 @@
 import "./globals.css";
-import { AuthProvider } from "@/utils/authContext.js";
 import { ThemeProvider } from "@/utils/Theme/ThemeProvider";
-import StoreProvider from "@/lib/store/StoreProvider";
 import { Toaster } from "react-hot-toast";
+import ReduxWrapper from "@/components/wrapper/redux-wrapper";
 
-import {
-  Inter,
-  Playfair_Display,
-  Manrope,
-  Geist_Mono,
-} from "next/font/google";
+import { Inter, Playfair_Display, Manrope, Geist_Mono } from "next/font/google";
 
 // Main body font
 const inter = Inter({
@@ -45,18 +39,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
-          <StoreProvider>
-            <AuthProvider>
-              {children}
+                <ReduxWrapper>
+            {children}
 
-          {/* Toaster UI */}
-              <Toaster position="top-right" />
-            </AuthProvider>
-          </StoreProvider>
+            {/* Toaster UI */}
+            <Toaster position="top-right" />
+                 </ReduxWrapper>
         </ThemeProvider>
       </body>
     </html>

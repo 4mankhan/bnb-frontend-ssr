@@ -3,11 +3,11 @@
 import React from "react";
 import Image from "next/image";
 import { Users, Baby, BedDouble, Star, ShieldCheck } from "lucide-react";
-import { useAuth } from "@/utils/authContext";
+import { useAuth } from "@/utils/useAuth";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
+function Rooms({  rooms = [], roomAvailability, selectedRoom, setSelectedRoom }) {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -74,7 +74,7 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
                   <div className="hidden md:grid grid-cols-2 gap-1 h-70 w-full">
                     <div className="relative w-full h-full">
                       <Image
-                        src={room.photos?.[0]?.url || "/fallback.jpg"}
+                        src={room.photos?.[0] || "/fallback.jpg"}
                         alt="room 1"
                         fill
                         className="object-cover"
@@ -84,9 +84,7 @@ function Rooms({ rooms, roomAvailability, selectedRoom, setSelectedRoom }) {
                     <div className="relative w-full h-full">
                       <Image
                         src={
-                          room.photos?.[1]?.url ||
-                          room.photos?.[0]?.url ||
-                          "/fallback.jpg"
+                          room.photos?.[1] || "/fallback.jpg"
                         }
                         alt="room 2"
                         fill
