@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import background from "../../public/images/bg.jpg";
@@ -8,10 +8,13 @@ import { useAuth } from "../../utils/useAuth.js";
 import { Pencil, LogOut, ArrowLeft, Mail, User, Lock, Shield, Home, AlertCircle } from "lucide-react";
 import { useUpdateProfileMutation } from "@/lib/api";
 import toast from "react-hot-toast";
+import LoadingState from "@/components/loading";
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, setUser, logout, loading } = useAuth();
+  const {user : authUser, isLoading: loading, isAuthenticated, logout } = useAuth();
+  console.log(authUser);
+  const user = authUser?.user;
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -21,21 +24,23 @@ export default function AccountPage() {
     password: "",
   });
 
+
+    useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, router]);
+
+
+  // Now conditions are safe
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
-          <span className="text-sm font-medium text-gray-550 dark:text-gray-400">Loading your profile...</span>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
-  if (!user) {
-    router.push("/login");
+  if (!isAuthenticated || !user) {
     return null;
   }
+
 
   const handleLogout = () => {
     logout();

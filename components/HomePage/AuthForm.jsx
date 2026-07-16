@@ -39,9 +39,13 @@ const dispatch = useDispatch();
 
       const authMutation = isRegister ? signupUser : loginUser;
       const response = await authMutation(payload).unwrap();
-      const user = response.data.user;
+      console.log("LOGIN UNWRAPPED RESPONSE:", response);
+
+const user = response?.data?.user;
       await dispatch(
-        setCredentials({user: response.data})).unwrap();
+        setCredentials({ user: response })).unwrap();
+      
+      console.log("redux state", response)
 
       toast.success(isRegister ? "Account created successfully!" : "Welcome back!");
 
