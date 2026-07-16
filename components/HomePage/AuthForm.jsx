@@ -4,14 +4,23 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLoginMutation, useSignupMutation } from "@/lib/api";
 import background from "@/public/images/bg.jpg";
-import { Mail, Lock, User, UserCheck, ArrowRight, Hotel, ShieldCheck, AlertCircle } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  UserCheck,
+  ArrowRight,
+  Hotel,
+  ShieldCheck,
+  AlertCircle,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/lib/slice/authSlice";
 
 export default function AuthForm({ type = "login" }) {
   const router = useRouter();
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const [loginUser, { isLoading: isLoginLoading }] = useLoginMutation();
   const [signupUser, { isLoading: isSignupLoading }] = useSignupMutation();
@@ -32,44 +41,50 @@ const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const payload = isRegister
         ? form
-        : { email: form.email, password: form.password };
+        : {
+            email: form.email,
+            password: form.password,
+          };
 
       const authMutation = isRegister ? signupUser : loginUser;
+
       const response = await authMutation(payload).unwrap();
-      console.log("LOGIN UNWRAPPED RESPONSE:", response);
-
-const user = response?.data?.user;
+      const { user, accessToken } = response;
       await dispatch(
-        setCredentials({ user: response })).unwrap();
-      
-      console.log("redux state", response)
+        setCredentials({
+          user,
+          accessToken,
+        }),
+      ).unwrap();
 
-      toast.success(isRegister ? "Account created successfully!" : "Welcome back!");
+      toast.success(
+        isRegister ? "Account created successfully!" : "Welcome back!",
+      );
 
-      if (user?.role === "owner") {
-        router.push("/owner");
-      } else {
-        router.push("/");
-      }
+      router.push(user.role === "owner" ? "/owner" : "/");
     } catch (err) {
       console.error("FULL ERROR:", err);
-      const msg = err?.data?.message || err?.message || "Authentication failed. Please check your credentials.";
+
+      const msg =
+        err?.data?.message ||
+        err?.message ||
+        "Authentication failed. Please check your credentials.";
+
       toast.error(msg);
     }
   };
-
   return (
     <main className="relative min-h-screen bg-slate-900 dark:bg-slate-950 flex items-center justify-center px-4 overflow-hidden">
       {/* Background Image with Dark Overlay */}
-      
+
       <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-black/40 to-slate-900/70" />
 
       {/* Card Container */}
       <div className="relative z-10 bg-white/95 dark:bg-gray-900/90 backdrop-blur-md shadow-2xl border border-white/20 dark:border-gray-800/80 rounded-3xl p-6 md:p-8 w-full max-w-md text-center transition-all duration-300">
-        
         {/* Brand Logo & Name */}
         <div className="flex flex-col items-center gap-1.5 mb-5">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-tr from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25">
@@ -85,8 +100,8 @@ const user = response?.data?.user;
           {isRegister ? "Create an Account" : "Sign In"}
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 mb-6">
-          {isRegister 
-            ? "Join us to find the most cozy stays around the world." 
+          {isRegister
+            ? "Join us to find the most cozy stays around the world."
             : "Enter your credentials to access your account."}
         </p>
 
@@ -96,7 +111,9 @@ const user = response?.data?.user;
             <>
               {/* Full Name */}
               <div className="space-y-1 text-left">
-                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Full Name</label>
+                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                  Full Name
+                </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                     <User className="h-4 w-4" />
@@ -115,7 +132,9 @@ const user = response?.data?.user;
 
               {/* Role Select */}
               <div className="space-y-1 text-left">
-                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Role</label>
+                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                  Role
+                </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                     <UserCheck className="h-4 w-4" />
@@ -136,7 +155,9 @@ const user = response?.data?.user;
 
           {/* Email */}
           <div className="space-y-1 text-left">
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Email Address</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+              Email Address
+            </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                 <Mail className="h-4 w-4" />
@@ -156,7 +177,9 @@ const user = response?.data?.user;
           {/* Password */}
           <div className="space-y-1 text-left">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Password</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                Password
+              </label>
               {!isRegister && (
                 <span className="text-[11px] font-semibold text-rose-500 hover:text-rose-600 cursor-pointer transition">
                   Forgot?
@@ -202,7 +225,9 @@ const user = response?.data?.user;
         {/* Divider */}
         <div className="relative flex py-4 items-center">
           <div className="grow border-t border-gray-200 dark:border-gray-800"></div>
-          <span className="shrink mx-4 text-[11px] text-gray-400 uppercase font-bold tracking-wider">or continue with</span>
+          <span className="shrink mx-4 text-[11px] text-gray-400 uppercase font-bold tracking-wider">
+            or continue with
+          </span>
           <div className="grow border-t border-gray-200 dark:border-gray-800"></div>
         </div>
 
@@ -237,7 +262,11 @@ const user = response?.data?.user;
             type="button"
             className="inline-flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900 transition active:scale-95 cursor-pointer"
           >
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <svg
+              className="h-4 w-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
               <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z" />
             </svg>
             Facebook

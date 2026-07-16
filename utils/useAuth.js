@@ -1,6 +1,7 @@
 import { useLogoutMutation } from "@/lib/api/authApi";
 import {
   selectCurrentUser,
+  selectAccessToken,
   selectIsAuthenticated,
   selectIsLoading,
   selectAuthError,
@@ -8,23 +9,27 @@ import {
   logout,
   clearAuth,
 } from "@/lib/slice/authSlice";
+
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
+
   const user = useSelector(selectCurrentUser);
+  const accessToken = useSelector(selectAccessToken);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectIsLoading);
   const authError = useSelector(selectAuthError);
-  const router = useRouter();
+
   const [logoutAPI, { isLoading: isLogoutLoading }] = useLogoutMutation();
 
   const handleLogout = useCallback(async () => {
     try {
       await logoutAPI().unwrap();
-      dispatch(logout());
+      await dispatch(logout()).unwrap();
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -34,22 +39,28 @@ export const useAuth = () => {
   }, [dispatch, logoutAPI, router]);
 
   const updateUser = useCallback(
-    async (data) => {
+    async (updatedUser) => {
       try {
-        const result = await dispatch(
-          setCredentials({ user: { ...data, userType: "consumer" } })
+        return await dispatch(
+          setCredentials({
+            user: {
+              ...updatedUser,
+              userType: "consumer",
+            },
+            accessToken,
+          })
         ).unwrap();
-        return result;
       } catch (error) {
         console.error("Update user error:", error);
         throw error;
       }
     },
-    [dispatch]
+    [dispatch, accessToken]
   );
 
   return {
     user,
+    accessToken,
     isAuthenticated,
     isLoading: isLoading || isLogoutLoading,
     error: authError,

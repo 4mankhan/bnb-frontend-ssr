@@ -5,16 +5,23 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import background from "../../public/images/bg.jpg";
 import { useAuth } from "../../utils/useAuth.js";
-import { Pencil, LogOut, ArrowLeft, Mail, User, Lock, Shield, Home, AlertCircle } from "lucide-react";
+import {
+  Pencil,
+  LogOut,
+  ArrowLeft,
+  Mail,
+  User,
+  Lock,
+  Shield,
+  Home,
+  AlertCircle,
+} from "lucide-react";
 import { useUpdateProfileMutation } from "@/lib/api";
 import toast from "react-hot-toast";
 import LoadingState from "@/components/loading";
 
 export default function AccountPage() {
   const router = useRouter();
-  const {user : authUser, isLoading: loading, isAuthenticated, logout } = useAuth();
-  console.log(authUser);
-  const user = authUser?.user;
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -24,23 +31,17 @@ export default function AccountPage() {
     password: "",
   });
 
+  const { user, accessToken, isAuthenticated, logout, isLoading } = useAuth();
 
-    useEffect(() => {
-    if (!loading && !isAuthenticated) {
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [loading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
 
-
-  // Now conditions are safe
-  if (loading) {
+  if (isLoading) {
     return <LoadingState />;
   }
-
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
 
   const handleLogout = () => {
     logout();
@@ -63,21 +64,29 @@ export default function AccountPage() {
       if (!payload.password) {
         delete payload.password;
       }
-      
-      const data = await updateProfile(payload).unwrap();
-      setUser(data);
-      localStorage.setItem("user", JSON.stringify(data));
-      
-      setFormData({
-        name: data.name,
-        email: data.email,
-        password: "",
+
+      const updated = await updateProfile(payload).unwrap();
+
+      await updateUser({
+        ...authUser,
+        user: {
+          ...authUser.user,
+          ...updated,
+        },
       });
+
+      setFormData({
+        name: updated.name,
+        email: updated.email,
+        password: "***********",
+      });
+
       setIsEditing(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
       console.error(err);
-      const msg = err?.data?.error || err?.data?.message || "Profile update failed";
+      const msg =
+        err?.data?.error || err?.data?.message || "Profile update failed";
       toast.error(msg);
     }
   };
@@ -105,7 +114,6 @@ export default function AccountPage() {
 
       {/* Main Container Card */}
       <div className="relative z-20 w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-250/80 dark:border-gray-800/80 bg-white/95 dark:bg-gray-900/90 backdrop-blur-md transition-all">
-        
         {/* Navigation & Actions Header */}
         <div className="flex items-center justify-between mb-6">
           <button
@@ -157,7 +165,9 @@ export default function AccountPage() {
             </div>
           ) : (
             <div className="w-full text-left">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 text-center">Update Your Profile</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 text-center">
+                Update Your Profile
+              </h3>
             </div>
           )}
 
@@ -178,7 +188,9 @@ export default function AccountPage() {
           <form onSubmit={handleUpdate} className="space-y-4">
             {/* Name input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">Full Name</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">
+                Full Name
+              </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                   <User className="h-4 w-4" />
@@ -196,7 +208,9 @@ export default function AccountPage() {
 
             {/* Email input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">Email Address</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">
+                Email Address
+              </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                   <Mail className="h-4 w-4" />
@@ -215,7 +229,9 @@ export default function AccountPage() {
 
             {/* Password input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">New Password (optional)</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-450">
+                New Password (optional)
+              </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                   <Lock className="h-4 w-4" />
