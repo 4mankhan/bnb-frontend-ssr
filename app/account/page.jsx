@@ -32,6 +32,7 @@ export default function AccountPage() {
   });
 
   const { user, accessToken, isAuthenticated, logout, isLoading } = useAuth();
+  console.log("user", user);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

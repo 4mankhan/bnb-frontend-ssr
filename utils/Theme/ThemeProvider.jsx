@@ -13,22 +13,29 @@ const ThemeContext = createContext(null);
 const STORAGE_KEY = "amanbnb-theme";
 
 export function ThemeProvider({ children }) {
-  // ✅ Lazy init (runs only once per environment)
-  const [dark, setDarkState] = useState(() => {
-    if (typeof window === "undefined") return false;
+  const [dark, setDarkState] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // ✅ Only read client-side settings after mounting to prevent hydration mismatches
+  useEffect(() => {
+    setMounted(true);
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored === "dark";
-    } catch {
-      return false;
-    }
-  });
+      if (stored) {
+        setDarkState(stored === "dark");
+      } else {
+        const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setDarkState(systemPrefersDark);
+      }
+    } catch {}
+  }, []);
 
   // ✅ Only DOM sync (valid useEffect usage)
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-  }, [dark]);
+    if (mounted) {
+      document.documentElement.classList.toggle("dark", dark);
+    }
+  }, [dark, mounted]);
 
   // ✅ Explicit setter
   const setDark = useCallback((value) => {
@@ -50,8 +57,8 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ dark, setDark, toggle }),
-    [dark, setDark, toggle]
+    () => ({ dark, setDark, toggle, mounted }),
+    [dark, setDark, toggle, mounted]
   );
 
   return (

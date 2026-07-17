@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import BookingCard from "@/components/HotelPage/BookingCard";
-import PaymentModal from "@/components/HotelPage/xPaymentModal";
 import Rooms from "@/components/HotelPage/Rooms";
 import toast from "react-hot-toast";
 import RoomCardSkeleton from "@/components/RoomCardSkeleton";
@@ -14,15 +13,17 @@ import {
   useGetHotelByIdQuery,
   useGetRoomsByHotelQuery,
   useCreateBookingMutation,
+  useCreatePaymentOrderMutation,
+  useVerifyPaymentMutation,
 } from "@/lib/api";
 import { useRoomAvailability } from "@/hooks/useRoomAvailability";
+import { usePaymentHandler } from "@/hooks/usePaymentHandler";
+import { useAuth } from "@/utils/useAuth";
 import Footer from "@/components/Footer";
 
 export default function HotelPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [showPayment, setShowPayment] = useState(false);
-  const [booking, setBooking] = useState(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
@@ -66,10 +67,26 @@ export default function HotelPage() {
   const { roomAvailability } = useRoomAvailability(rooms, checkIn, checkOut);
 
   const [createBooking] = useCreateBookingMutation();
+  const [createPaymentOrder] = useCreatePaymentOrderMutation();
+  const [verifyPayment] = useVerifyPaymentMutation();
+  const { user: currentUser } = useAuth();
+
+  const { initiatePayment, isProcessing } = usePaymentHandler({
+    createBooking,
+    createPaymentOrder,
+    verifyPayment,
+    currentUser,
+  });
 
   const handleReserve = async (data) => {
+    if (!currentUser) {
+      toast.error("Please login to reserve a stay.");
+      router.push("/login");
+      return;
+    }
+
     try {
-      const result = await createBooking({
+      await initiatePayment({
         hotelId: hotel._id,
         roomId: selectedRoom._id,
         fromDate: checkIn,
@@ -80,10 +97,7 @@ export default function HotelPage() {
           children: data.children,
           infants: data.infants,
         },
-      }).unwrap();
-
-      setBooking(result.booking);
-      setShowPayment(true);
+      });
     } catch (err) {
       const message = err?.data?.message;
 
@@ -97,14 +111,6 @@ export default function HotelPage() {
 
       toast.error(message || "Booking failed");
     }
-  };
-
-  const onSuccess = () => {
-    toast.success("Payment successful 🎉");
-
-    setTimeout(() => {
-      router.push("/bookings");
-    }, 1500);
   };
 
   if (isHotelLoading) {
@@ -228,10 +234,7 @@ export default function HotelPage() {
             </section>
 
             <hr className="border-gray-100 dark:border-gray-800" />
-
-          
           </div>
-          
 
           <div className="hidden lg:block lg:col-span-1">
             {!selectedRoom ? (
@@ -264,19 +267,19 @@ export default function HotelPage() {
                 setCheckOut={setCheckOut}
                 checkOut={checkOut}
                 onReserve={handleReserve}
+                disabled={isProcessing}
               />
             )}
           </div>
-
         </div>
       </div>
 
-        <Rooms
-              rooms={rooms?.data ?? []}
-              roomAvailability={roomAvailability}
-              selectedRoom={selectedRoom}
-              setSelectedRoom={setSelectedRoom}
-            />
+      <Rooms
+        rooms={rooms?.data ?? []}
+        roomAvailability={roomAvailability}
+        selectedRoom={selectedRoom}
+        setSelectedRoom={setSelectedRoom}
+      />
 
       {selectedRoom && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 px-6 py-4.5 flex items-center justify-between shadow-xl lg:hidden">
@@ -333,18 +336,13 @@ export default function HotelPage() {
                 setIsMobileDrawerOpen(false);
                 handleReserve(data);
               }}
+              disabled={isProcessing}
             />
           </div>
         </div>
       )}
 
-      <PaymentModal
-        isOpen={showPayment}
-        booking={booking}
-        onClose={() => setShowPayment(false)}
-        onSuccess={onSuccess}
-      />
-      <Footer/>
+      <Footer />
     </main>
   );
 }

@@ -1,13 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { baseApi } from "@/lib/api/baseApi";
 
-export function useRoomAvailability(rooms, checkIn, checkOut) {
+export function useRoomAvailability(rooms = [], checkIn, checkOut) {
   const dispatch = useDispatch();
   const [roomAvailability, setRoomAvailability] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Stable dependency key
+  const roomIdsKey = useMemo(() => {
+    const roomArray = Array.isArray(rooms)
+      ? rooms
+      : Array.isArray(rooms?.data)
+        ? rooms.data
+        : [];
+
+    return roomArray
+      .map((room) => room._id)
+      .sort()
+      .join(",");
+  }, [rooms]);
 
   useEffect(() => {
     if (!rooms.length || !checkIn || !checkOut) {
@@ -19,6 +33,7 @@ export function useRoomAvailability(rooms, checkIn, checkOut) {
 
     const fetchAvailability = async () => {
       setLoading(true);
+
       try {
         const results = await Promise.all(
           rooms.map((room) =>
@@ -38,9 +53,11 @@ export function useRoomAvailability(rooms, checkIn, checkOut) {
         if (cancelled) return;
 
         const availabilityMap = {};
+
         rooms.forEach((room, index) => {
           availabilityMap[room._id] = results[index];
         });
+
         setRoomAvailability(availabilityMap);
       } catch (err) {
         if (!cancelled) {
@@ -58,7 +75,7 @@ export function useRoomAvailability(rooms, checkIn, checkOut) {
     return () => {
       cancelled = true;
     };
-  }, [rooms, checkIn, checkOut, dispatch]);
+  }, [roomIdsKey, checkIn, checkOut, dispatch, rooms]);
 
   return { roomAvailability, loading };
 }

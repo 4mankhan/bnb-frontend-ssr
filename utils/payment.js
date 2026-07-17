@@ -9,16 +9,27 @@ export const formatPaymentError = (error) => {
 };
 
 export const createPassengerDetails = (formData) => ({
-  name: `${formData.firstName} ${formData.lastName}`,
+    name:
+    formData?.name ||
+    [formData?.firstName, formData?.lastName]
+      .filter(Boolean)
+      .join(" "),
+
+  email: data?.email || "",
   age: formData.age,
   gender: formData.gender,
   email: formData.email,
   phone: formData.phone,
 });
 
-export const createPrefillData = (formData) => ({
-  name: `${formData.firstName} ${formData.lastName}`,
-  email: formData.email,
-  contact: formData.phone,
-});
+export const createPrefillData = (data) => ({
+  name:
+    data?.name ||
+    [data?.firstName, data?.lastName]
+      .filter(Boolean)
+      .join(" "),
 
+  email: data?.email || "",
+
+  contact: data?.phone || data?.phoneNumber || "",
+});

@@ -15,15 +15,18 @@ async function getEncryptionKey() {
 
   if (envKey) {
     try {
-      if (!/^[a-fA-F0-9]{64}$/.test(envKey)) {
-        throw new Error(
-          "Invalid encryption key format in environment variable"
+      let keyBytes;
+      if (/^[a-fA-F0-9]{64}$/.test(envKey)) {
+        keyBytes = new Uint8Array(
+          envKey.match(/.{2}/g).map((byte) => parseInt(byte, 16))
         );
+      } else {
+        // Derive a 256-bit key by hashing the arbitrary envKey using SHA-256
+        const encoder = new TextEncoder();
+        const data = encoder.encode(envKey);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        keyBytes = new Uint8Array(hashBuffer);
       }
-
-      const keyBytes = new Uint8Array(
-        envKey.match(/.{2}/g).map((byte) => parseInt(byte, 16))
-      );
 
       return await crypto.subtle.importKey(
         "raw",
@@ -39,7 +42,7 @@ async function getEncryptionKey() {
   }
 
   throw new Error(
-    "No encryption key found. Set ENCRYPTION_KEY environment variable."
+    "No encryption key found. Set NEXT_PUBLIC_ENCRYPTION_KEY environment variable."
   );
 }
 

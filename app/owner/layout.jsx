@@ -7,14 +7,7 @@ import { useLazyGetProfileQuery } from "@/lib/api";
 import ThemeToggle from "@/utils/Theme/ThemeToggle";
 import { LayoutDashboard, Hotel, User, Home, ShieldAlert } from "lucide-react";
 
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return (
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    ""
-  );
-}
+import { useAuth } from "@/utils/useAuth";
 
 export default function OwnerLayout({ children }) {
   const router = useRouter();
@@ -22,10 +15,12 @@ export default function OwnerLayout({ children }) {
   const [status, setStatus] = useState("checking");
   const [error, setError] = useState("");
   const [fetchProfile] = useLazyGetProfileQuery();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
@@ -55,7 +50,7 @@ export default function OwnerLayout({ children }) {
     };
 
     verifyOwner();
-  }, [pathname, router, fetchProfile]);
+  }, [pathname, router, fetchProfile, isAuthenticated, isLoading]);
 
   if (status === "checking") {
     return (

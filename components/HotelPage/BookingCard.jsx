@@ -17,6 +17,7 @@ function BookingCard({
   setCheckIn,
   setCheckOut,
   onReserve,
+  disabled = false,
 }) {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
@@ -161,7 +162,7 @@ function BookingCard({
                   Guests
                 </span>
 
-                <span className="text-xs font-bold text-gray-800 dark:text-gray-800 mt-1">
+                <span className="text-xs font-bold text-gray-800 dark:text-gray-805 mt-1">
                   {adults} adults · {children + infants} guests
                 </span>
               </div>
@@ -213,15 +214,15 @@ function BookingCard({
               total: priceBreakdown.total,
             })
           }
-          disabled={!selectedRoom}
+          disabled={!selectedRoom || disabled}
           className={`mt-5 w-full py-3.5 rounded-xl text-xs font-bold transition-all
             ${
-              selectedRoom
+              selectedRoom && !disabled
                 ? "bg-rose-500 text-white hover:bg-rose-600"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
         >
-          Reserve Stay
+          {disabled ? "Processing..." : "Reserve Stay"}
         </button>
 
         <p className="text-center text-[10px] text-gray-400 font-semibold mt-3">
