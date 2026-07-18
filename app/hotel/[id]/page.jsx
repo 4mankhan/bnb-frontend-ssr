@@ -20,6 +20,7 @@ import { useRoomAvailability } from "@/hooks/useRoomAvailability";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useAuth } from "@/utils/useAuth";
 import Footer from "@/components/Footer";
+import PaymentLoading from "@/components/paymentLoading";
 
 export default function HotelPage() {
   const { id } = useParams();
@@ -71,7 +72,7 @@ export default function HotelPage() {
   const [verifyPayment] = useVerifyPaymentMutation();
   const { user: currentUser } = useAuth();
 
-  const { initiatePayment, isProcessing } = usePaymentHandler({
+  const { initiatePayment, isProcessing, loadingText } = usePaymentHandler({
     createBooking,
     createPaymentOrder,
     verifyPayment,
@@ -133,6 +134,7 @@ export default function HotelPage() {
 
   return (
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-150 min-h-screen transition-colors duration-200 pb-0 lg:pb-0">
+      {isProcessing && <PaymentLoading message={loadingText} />}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-150 dark:border-gray-850 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-row justify-between items-center h-16">

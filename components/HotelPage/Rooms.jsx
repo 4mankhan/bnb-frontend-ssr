@@ -7,7 +7,12 @@ import { useAuth } from "@/utils/useAuth";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-function Rooms({  rooms = [], roomAvailability, selectedRoom, setSelectedRoom }) {
+function Rooms({
+  rooms = [],
+  roomAvailability,
+  selectedRoom,
+  setSelectedRoom,
+}) {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -83,9 +88,7 @@ function Rooms({  rooms = [], roomAvailability, selectedRoom, setSelectedRoom })
 
                     <div className="relative w-full h-full">
                       <Image
-                        src={
-                          room.photos?.[1] || "/fallback.jpg"
-                        }
+                        src={room.photos?.[1] || "/fallback.jpg"}
                         alt="room 2"
                         fill
                         className="object-cover"

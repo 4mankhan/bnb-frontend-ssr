@@ -38,6 +38,7 @@ export const usePaymentHandler = ({
 }) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
+const [loadingText, setLoadingText] = useState("");
 
   const initiatePayment = async ({
     hotelId,
@@ -48,7 +49,6 @@ export const usePaymentHandler = ({
     guests,
   }) => {
     setIsProcessing(true);
-    console.log("price", totalPrice);
     try {
       // 1. Load Razorpay script dynamically
       const isLoaded = await loadRazorpayScript();
@@ -63,7 +63,7 @@ export const usePaymentHandler = ({
       validateRazorpayAvailability();
 
       // 2. Create Booking (PENDING + Redis Lock)
-      toast.loading("Creating order...", { id: "payment-toast" });
+     setLoadingText("Creating your booking...");
       const bookingRes = await createBooking({
         hotelId,
         roomId,
@@ -86,18 +86,13 @@ export const usePaymentHandler = ({
         throw new Error("Invalid response received from create-order API");
       }
 
-      toast.loading("Preparing secure payment...", {
-        id: "payment-toast",
-      });
+     
+setLoadingText("Preparing secure payment...");
 
       // 3. Create Razorpay Order
       const paymentOrder = await createPaymentOrder({
         bookingId,
       }).unwrap();
-
-      //console.log("Create payment order response:", paymentOrder);
-
-      toast.dismiss("payment-toast");
 
       // 3. Open Razorpay Checkout
       const options = {
@@ -111,13 +106,8 @@ export const usePaymentHandler = ({
         handler: async (response) => {
           console.log("respone", response);
           try {
-            setIsProcessing(true);
 
-            toast.loading("Verifying payment...", {
-              id: "payment-toast",
-            });
-
-            toast.loading("Verifying transaction...", { id: "payment-toast" });
+           setLoadingText("Verifying your payment...");
 
             // 5. Verify payment
             await verifyPayment({
@@ -176,5 +166,5 @@ export const usePaymentHandler = ({
     }
   };
 
-  return { initiatePayment, isProcessing };
+  return { initiatePayment, isProcessing, loadingText };
 };
