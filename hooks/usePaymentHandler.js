@@ -38,7 +38,7 @@ export const usePaymentHandler = ({
 }) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
-const [loadingText, setLoadingText] = useState("");
+  const [loadingText, setLoadingText] = useState("");
 
   const initiatePayment = async ({
     hotelId,
@@ -63,7 +63,7 @@ const [loadingText, setLoadingText] = useState("");
       validateRazorpayAvailability();
 
       // 2. Create Booking (PENDING + Redis Lock)
-     setLoadingText("Creating your booking...");
+      setLoadingText("Creating your booking...");
       const bookingRes = await createBooking({
         hotelId,
         roomId,
@@ -86,8 +86,7 @@ const [loadingText, setLoadingText] = useState("");
         throw new Error("Invalid response received from create-order API");
       }
 
-     
-setLoadingText("Preparing secure payment...");
+      setLoadingText("Preparing secure payment...");
 
       // 3. Create Razorpay Order
       const paymentOrder = await createPaymentOrder({
@@ -106,8 +105,7 @@ setLoadingText("Preparing secure payment...");
         handler: async (response) => {
           console.log("respone", response);
           try {
-
-           setLoadingText("Verifying your payment...");
+            setLoadingText("Verifying your payment...");
 
             // 5. Verify payment
             await verifyPayment({
@@ -117,14 +115,16 @@ setLoadingText("Preparing secure payment...");
               razorpay_signature: response.razorpay_signature,
             }).unwrap();
 
-            toast.success("Payment completed and verified successfully! ", {
-              id: "payment-toast",
-            });
-
             // Redirect to bookings list
             setTimeout(() => {
               router.push("/bookings");
+              setTimeout(() => {
+                toast.success("Payment completed and verified successfully! ", {
+                  id: "payment-toast",
+                });
+              }, 2000);
             }, 1000);
+            setIsProcessing(false);
           } catch (err) {
             console.error("Payment confirmation or verification failed:", err);
             toast.error(
